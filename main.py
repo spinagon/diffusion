@@ -8,24 +8,35 @@ from pathlib import Path
 
 default_url = "http://127.0.0.1:7860/"
 
-class Connection():
+
+class Connection:
     def __init__(self, url):
         self.url = url
 
-    def txt2img(self, prompt, neg=""):
+    def txt2img(self, prompt, neg="", **kwargs):
+        payload = {"prompt": prompt, "negative_prompt": neg, "steps": 30}
+        payload.update(kwargs)
         r = requests.post(
             self.url + "sdapi/v1/txt2img",
-            json={"prompt": prompt, "negative_prompt": neg, "steps": 30},
+            json=payload,
         )
-        path = (
-            "./sd/"
-            + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
-            + ".png"
+        path = self.prepare_path()
+        if r.status_code != 200:
+            print(r)
+            print(r.text)
+        paths = []
+        for i, image in enumerate(r.json()["images"]):
+            p = path + "_{}.png".format(i)
+            paths.append(p)
+            Path(p).write_bytes(base64.decodebytes(image.encode()))
+        return paths
+
+    def prepare_path(self):
+        path = "./sd/" + datetime.datetime.now().isoformat().split(".")[0].replace(
+            ":", "."
         )
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        Path(path).write_bytes(base64.decodebytes(r.json()["images"][0].encode()))
         return path
-
 
     def img2img(
         self,
@@ -75,14 +86,16 @@ class Connection():
                 "scale": scale,
             },
         )
-        path = (
-            "./sd/"
-            + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
-            + ".png"
-        )
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        Path(path).write_bytes(base64.decodebytes(r.json()["images"][0].encode()))
-        return path
+        path = self.prepare_path()
+        if r.status_code != 200:
+            print(r)
+            print(r.text)
+        paths = []
+        for i, image in enumerate(r.json()["images"]):
+            p = path + "_{}.png".format(i)
+            paths.append(p)
+            Path(p).write_bytes(base64.decodebytes(image.encode()))
+        return paths
 
     def pack_image(self, img, format=None):
         if isinstance(img, str):
@@ -106,3 +119,11 @@ class Connection():
             json={"image": image, "model": "clip"},
         )
         return r.json()
+
+    def upscale(self, img):
+        image = self.pack_image(img)
+        payload = {"image": image, "upscaler_1": "4x_foolhardy_Remacri"}
+        r = requests.post(self.url + "sdapi/v1/extra-single-image", json=payload)
+        path = self.prepare_path() + ".png"
+        Path(path).write_bytes(base64.decodebytes(r.json()["image"].encode()))
+        return path
