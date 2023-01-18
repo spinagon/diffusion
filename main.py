@@ -36,6 +36,7 @@ def img2img(
     height=None,
     steps=30,
     scale=7,
+    **kwargs
 ):
     if isinstance(img, str):
         image = Path(img).read_bytes()
@@ -53,24 +54,27 @@ def img2img(
     if not height:
         height = round((np.sqrt((512 * 512) / (w * h)) * h) / 64) * 64
 
+    payload = {
+        "prompt": prompt,
+        "steps": steps,
+        "init_images": [base64.encodebytes(image).decode()],
+        "denoising_strength": denoise,
+        "width": width,
+        "height": height,
+        "seed": seed,
+        "sampler_index": sampler,
+        "mask": mask,
+        "negative_prompt": neg,
+        "cfg_scale": scale,
+    }
+    payload.update(kwargs)
+
     r = requests.post(
         url + "sdapi/v1/img2img",
-        json={
-            "prompt": prompt,
-            "steps": steps,
-            "init_images": [base64.encodebytes(image).decode()],
-            "denoising_strength": denoise,
-            "width": width,
-            "height": height,
-            "seed": seed,
-            "sampler_index": sampler,
-            "mask": mask,
-            "negative_prompt": neg,
-            "scale": scale,
-        },
+        json=payload,
     )
     path = (
-        "./sd/"
+        "./"
         + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
         + ".png"
     )
