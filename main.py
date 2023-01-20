@@ -52,6 +52,8 @@ class Connection:
         height=None,
         steps=30,
         scale=7,
+        inpaint_padding=64,
+        **kwargs
     ):
         if isinstance(img, str):
             h, w, *_ = imageio.imread(img).shape
@@ -70,9 +72,7 @@ class Connection:
                 width = longer
                 height = shorter
 
-        r = requests.post(
-            self.url + "sdapi/v1/img2img",
-            json={
+        payload = {
                 "prompt": prompt,
                 "steps": steps,
                 "init_images": [image],
@@ -84,12 +84,18 @@ class Connection:
                 "mask": mask,
                 "negative_prompt": neg,
                 "scale": scale,
-            },
+                "inpaint_full_res_padding": inpaint_padding
+            }
+        payload.update(kwargs)
+        r = requests.post(
+            self.url + "sdapi/v1/img2img",
+            json=payload
         )
         path = self.prepare_path()
         if r.status_code != 200:
             print(r)
             print(r.text)
+            return
         paths = []
         for i, image in enumerate(r.json()["images"]):
             p = path + "_{}.png".format(i)
@@ -120,10 +126,14 @@ class Connection:
         )
         return r.json()
 
-    def upscale(self, img):
+    def upscale(self, img, upscaler_1="4x_foolhardy_Remacri", **kwargs):
         image = self.pack_image(img)
-        payload = {"image": image, "upscaler_1": "4x_foolhardy_Remacri"}
+        payload = {"image": image, "upscaler_1": upscaler_1}
+        payload.update(kwargs)
         r = requests.post(self.url + "sdapi/v1/extra-single-image", json=payload)
+        if r.status_code != 200:
+            print(r)
+            print(r.text)
         path = self.prepare_path() + ".png"
         Path(path).write_bytes(base64.decodebytes(r.json()["image"].encode()))
         return path
