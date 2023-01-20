@@ -73,21 +73,24 @@ class Connection:
                 height = shorter
 
         payload = {
-            "prompt": prompt,
-            "steps": steps,
-            "init_images": [image],
-            "denoising_strength": denoise,
-            "width": width,
-            "height": height,
-            "seed": seed,
-            "sampler_index": sampler,
-            "mask": mask,
-            "negative_prompt": neg,
-            "scale": scale,
-            "inpaint_full_res_padding": inpaint_padding,
-        }
+                "prompt": prompt,
+                "steps": steps,
+                "init_images": [image],
+                "denoising_strength": denoise,
+                "width": width,
+                "height": height,
+                "seed": seed,
+                "sampler_index": sampler,
+                "mask": mask,
+                "negative_prompt": neg,
+                "scale": scale,
+                "inpaint_full_res_padding": inpaint_padding
+            }
         payload.update(kwargs)
-        r = requests.post(self.url + "sdapi/v1/img2img", json=payload)
+        r = requests.post(
+            self.url + "sdapi/v1/img2img",
+            json=payload
+        )
         path = self.prepare_path()
         if r.status_code != 200:
             print(r)
