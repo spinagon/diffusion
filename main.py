@@ -15,7 +15,12 @@ class Connection:
         self.url = url
 
     def txt2img(self, prompt, neg="", **kwargs):
-        payload = {"prompt": prompt, "negative_prompt": neg, "steps": 30}
+        payload = {
+            "prompt": prompt,
+            "negative_prompt": neg,
+            "steps": 30,
+            "sampler_index": "DPM++ 2M Karras",
+        }
         payload.update(kwargs)
         r = requests.post(
             self.url + "sdapi/v1/txt2img",
@@ -28,7 +33,7 @@ class Connection:
         paths = []
         for i, image in enumerate(r.json()["images"]):
             data = base64.decodebytes(image.encode())
-            p = path + "_{}.{}}".format(i, filetype.guess_extension(data))
+            p = path + "_{}.{}".format(i, filetype.guess_extension(data))
             paths.append(p)
             Path(p).write_bytes(data)
         return paths
@@ -98,7 +103,7 @@ class Connection:
         paths = []
         for i, image in enumerate(r.json()["images"]):
             data = base64.decodebytes(image.encode())
-            p = path + "_{}.{}}".format(i, filetype.guess_extension(data))
+            p = path + "_{}.{}".format(i, filetype.guess_extension(data))
             paths.append(p)
             Path(p).write_bytes(data)
 
@@ -135,13 +140,16 @@ class Connection:
         if r.status_code != 200:
             print(r)
             print(r.text)
-        path = self.prepare_path() + ".png"
-        Path(path).write_bytes(base64.decodebytes(r.json()["image"].encode()))
+        data = base64.decodebytes(r.json()["image"].encode())
+        path = self.prepare_path() + "." + filetype.guess_extension(data)
+        Path(path).write_bytes(data)
         return path
 
 
 def loopback(n, img):
     for i in range(n):
+        display(Image.fromarray(imageio.imread(img)).resize((128, 128)))
         caption = conn.interrogate(img)["caption"]
+        print(i, caption)
         img = conn.txt2img(caption)[0]
     return Image.fromarray(imageio.imread(img))
