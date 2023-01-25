@@ -5,6 +5,7 @@ from io import BytesIO
 import imageio
 import datetime
 from pathlib import Path
+import filetype
 
 default_url = "http://127.0.0.1:7860/"
 
@@ -26,9 +27,10 @@ class Connection:
             print(r.text)
         paths = []
         for i, image in enumerate(r.json()["images"]):
-            p = path + "_{}.png".format(i)
+            data = base64.decodebytes(image.encode())
+            p = path + "_{}.{}}".format(i, filetype.guess_extension(data))
             paths.append(p)
-            Path(p).write_bytes(base64.decodebytes(image.encode()))
+            Path(p).write_bytes(data)
         return paths
 
     def prepare_path(self):
@@ -95,9 +97,11 @@ class Connection:
             return
         paths = []
         for i, image in enumerate(r.json()["images"]):
-            p = path + "_{}.png".format(i)
+            data = base64.decodebytes(image.encode())
+            p = path + "_{}.{}}".format(i, filetype.guess_extension(data))
             paths.append(p)
-            Path(p).write_bytes(base64.decodebytes(image.encode()))
+            Path(p).write_bytes(data)
+
         return paths
 
     def pack_image(self, img, format=None):
@@ -134,3 +138,10 @@ class Connection:
         path = self.prepare_path() + ".png"
         Path(path).write_bytes(base64.decodebytes(r.json()["image"].encode()))
         return path
+
+
+def loopback(n, img):
+    for i in range(n):
+        caption = conn.interrogate(img)["caption"]
+        img = conn.txt2img(caption)[0]
+    return Image.fromarray(imageio.imread(img))
