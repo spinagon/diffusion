@@ -67,6 +67,10 @@ class Connection:
         if isinstance(img, np.ndarray):
             h, w, *_ = img.shape
         image = self.pack_image(img)
+        if mask is not None:
+            mask = self.pack_image(mask)
+            width = 512
+            height = 512
         if not width and not height:
             shorter = min(h, w)
             longer = max(h, w)
