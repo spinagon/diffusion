@@ -119,7 +119,10 @@ class Connection:
             if format is None:
                 format = Path(img).suffix.strip(".")
         if isinstance(img, np.ndarray):
-            img_8 = (img * 255).astype(np.uint8)
+            if img.dtype == np.uint8:
+                img_8 = img
+            else:
+                img_8 = (img * 255).astype(np.uint8)
             data = BytesIO()
             if format is None:
                 format = "png"
