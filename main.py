@@ -138,12 +138,16 @@ class Connection:
                 self.url + "sdapi/v1/interrogate",
                 json={"image": image, "model": "clip"},
             )
+            caption = r.json()["caption"]
         else:
             r = requests.post(
                 self.url + "tagger/v1/interrogate",
                 json={"image": image, "model": "wd14-vit-v2", "threshold": 0.2},
             )
-        return r.json()["caption"]
+            tags = list(r.json()["caption"].keys())
+            tags = [x for x in tags in x not in ["general", "questionable", "sensitive", "explicit"]]
+            return ", ".join(tags)
+        return caption
 
     def upscale(self, img, upscaler_1="4x_foolhardy_Remacri", scale=2, **kwargs):
         image = self.pack_image(img)
@@ -159,11 +163,11 @@ class Connection:
         return path
 
 
-def loopback(n, img):
+def loopback(n, img, caption_model="clip"):
     from PIL import Image
     for i in range(n):
         display(Image.fromarray(imageio.imread(img)).resize((128, 128)))
-        caption = conn.interrogate(img)
+        caption = conn.interrogate(img, model=caption_model)
         print(i, caption)
-        img = conn.txt2img(caption)[0]
+        img = conn.txt2img(caption, neg="bad-artist")[0]
     return Image.fromarray(imageio.imread(img))
