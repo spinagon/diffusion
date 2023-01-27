@@ -145,7 +145,7 @@ class Connection:
                 json={"image": image, "model": "wd14-vit-v2", "threshold": 0.2},
             )
             tags = list(r.json()["caption"].keys())
-            tags = [x for x in tags in x not in ["general", "questionable", "sensitive", "explicit"]]
+            tags = [x for x in tags if x not in ["general", "questionable", "sensitive", "explicit"]]
             return ", ".join(tags)
         return caption
 
