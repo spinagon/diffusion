@@ -131,9 +131,9 @@ class Connection:
             image = data.read()
         return base64.encodebytes(image).decode()
 
-    def interrogate(self, img, method="clip"):
+    def interrogate(self, img, model="clip"):
         image = self.pack_image(img)
-        if method == "clip":
+        if model == "clip":
             r = requests.post(
                 self.url + "sdapi/v1/interrogate",
                 json={"image": image, "model": "clip"},
@@ -146,7 +146,8 @@ class Connection:
             )
             tags = list(r.json()["caption"].keys())
             tags = [x for x in tags if x not in ["general", "questionable", "sensitive", "explicit"]]
-            return ", ".join(tags)
+            caption = ", ".join(tags)
+            caption = caption.replace("(", r"\(").replace(")", r"\)")
         return caption
 
     def upscale(self, img, upscaler_1="4x_foolhardy_Remacri", scale=2, **kwargs):
