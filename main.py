@@ -154,6 +154,7 @@ class Connection:
 
 
 def loopback(n, img):
+    from PIL import Image
     for i in range(n):
         display(Image.fromarray(imageio.imread(img)).resize((128, 128)))
         caption = conn.interrogate(img)["caption"]
