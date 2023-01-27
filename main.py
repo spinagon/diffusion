@@ -131,13 +131,19 @@ class Connection:
             image = data.read()
         return base64.encodebytes(image).decode()
 
-    def interrogate(self, img):
+    def interrogate(self, img, method="clip"):
         image = self.pack_image(img)
-        r = requests.post(
-            self.url + "sdapi/v1/interrogate",
-            json={"image": image, "model": "clip"},
-        )
-        return r.json()
+        if method == "clip":
+            r = requests.post(
+                self.url + "sdapi/v1/interrogate",
+                json={"image": image, "model": "clip"},
+            )
+        else:
+            r = requests.post(
+                self.url + "tagger/v1/interrogate",
+                json={"image": image, "model": "wd14-vit-v2", "threshold": 0.2},
+            )
+        return r.json()["caption"]
 
     def upscale(self, img, upscaler_1="4x_foolhardy_Remacri", scale=2, **kwargs):
         image = self.pack_image(img)
@@ -157,7 +163,7 @@ def loopback(n, img):
     from PIL import Image
     for i in range(n):
         display(Image.fromarray(imageio.imread(img)).resize((128, 128)))
-        caption = conn.interrogate(img)["caption"]
+        caption = conn.interrogate(img)
         print(i, caption)
         img = conn.txt2img(caption)[0]
     return Image.fromarray(imageio.imread(img))
