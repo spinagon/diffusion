@@ -114,7 +114,7 @@ class Connection:
         return paths
 
     def pack_image(self, img, format=None):
-        if isinstance(img, str):
+        if isinstance(img, str) or isinstance(img, Path):
             image = Path(img).read_bytes()
             if format is None:
                 format = Path(img).suffix.strip(".")
