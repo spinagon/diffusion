@@ -1,11 +1,12 @@
 import base64
-import requests
-import numpy as np
-from io import BytesIO
-import imageio
 import datetime
+from io import BytesIO
 from pathlib import Path
+
 import filetype
+import imageio
+import numpy as np
+import requests
 from PIL import Image
 
 default_url = "http://127.0.0.1:7860/"

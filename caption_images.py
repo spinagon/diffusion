@@ -1,7 +1,9 @@
-from pathlib import Path
 import argparse
-from .main import Connection, default_url
+from pathlib import Path
+
 from tqdm import tqdm
+
+from .main import Connection, default_url
 
 
 def main(args):
