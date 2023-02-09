@@ -31,7 +31,6 @@ class Connection:
         path = self.prepare_path()
         if r.status_code != 200:
             print(r)
-            print(r.text)
         paths = []
         for i, image in enumerate(r.json()["images"]):
             data = base64.decodebytes(image.encode())
@@ -64,10 +63,12 @@ class Connection:
         inpaint_padding=64,
         **kwargs
     ):
-        if isinstance(img, str):
+        if isinstance(img, str) or isinstance(img, Path):
             h, w, *_ = imageio.imread(img).shape
         if isinstance(img, np.ndarray):
             h, w, *_ = img.shape
+        if isinstance(img, Image.Image):
+            w, h = img.size
         image = self.pack_image(img)
         if mask is not None:
             mask = self.pack_image(mask)
@@ -104,7 +105,6 @@ class Connection:
         path = self.prepare_path()
         if r.status_code != 200:
             print(r)
-            print(r.text)
             return
         paths = []
         for i, image in enumerate(r.json()["images"]):
@@ -130,7 +130,7 @@ class Connection:
                 format = "png"
             imageio.imwrite(data, img_8, format=format)
             image = data.getvalue()
-        if isinstance(img, Image):
+        if isinstance(img, Image.Image):
             data = BytesIO()
             if format is None:
                 format = "png"
@@ -169,7 +169,6 @@ class Connection:
         r = requests.post(self.url + "sdapi/v1/extra-single-image", json=payload)
         if r.status_code != 200:
             print(r)
-            print(r.text)
         data = base64.decodebytes(r.json()["image"].encode())
         path = self.prepare_path() + "." + filetype.guess_extension(data)
         Path(path).write_bytes(data)
