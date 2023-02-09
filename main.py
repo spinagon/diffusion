@@ -6,6 +6,7 @@ import imageio
 import datetime
 from pathlib import Path
 import filetype
+from PIL import Image
 
 default_url = "http://127.0.0.1:7860/"
 
@@ -127,8 +128,14 @@ class Connection:
             if format is None:
                 format = "png"
             imageio.imwrite(data, img_8, format=format)
-            data.seek(0)
-            image = data.read()
+            image = data.getvalue()
+        if isinstance(img, Image):
+            data = BytesIO()
+            if format is None:
+                format = "png"
+            img.save(data, format=format)
+            image = data.getvalue()
+
         return base64.encodebytes(image).decode()
 
     def interrogate(self, img, model="clip"):
@@ -145,7 +152,11 @@ class Connection:
                 json={"image": image, "model": "wd14-vit-v2", "threshold": 0.2},
             )
             tags = list(r.json()["caption"].keys())
-            tags = [x for x in tags if x not in ["general", "questionable", "sensitive", "explicit"]]
+            tags = [
+                x
+                for x in tags
+                if x not in ["general", "questionable", "sensitive", "explicit"]
+            ]
             caption = ", ".join(tags)
             caption = caption.replace("(", r"\(").replace(")", r"\)")
         return caption
@@ -165,7 +176,6 @@ class Connection:
 
 
 def loopback(n, img, caption_model="clip"):
-    from PIL import Image
     for i in range(n):
         display(Image.fromarray(imageio.imread(img)).resize((128, 128)))
         caption = conn.interrogate(img, model=caption_model)
