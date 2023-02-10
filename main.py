@@ -39,7 +39,6 @@ class Connection:
             Path(p).write_bytes(data)
         return paths
 
-
     def img2img(
         self,
         img,
@@ -166,9 +165,7 @@ def pack_image(img, format=None):
 
 
 def prepare_path():
-    path = "./sd/" + datetime.datetime.now().isoformat().split(".")[0].replace(
-        ":", "."
-    )
+    path = "./sd/" + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     return path
 
