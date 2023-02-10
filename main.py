@@ -66,9 +66,9 @@ class Connection:
             h, w, *_ = imageio.imread(img).shape
         if isinstance(img, np.ndarray):
             h, w, *_ = img.shape
-        image = self.pack_image(img)
+        image = pack_image(img)
         if mask is not None:
-            mask = self.pack_image(mask)
+            mask = pack_image(mask)
             width = 512
             height = 512
         if not width and not height:
@@ -113,26 +113,8 @@ class Connection:
 
         return paths
 
-    def pack_image(self, img, format=None):
-        if isinstance(img, str) or isinstance(img, Path):
-            image = Path(img).read_bytes()
-            if format is None:
-                format = Path(img).suffix.strip(".")
-        if isinstance(img, np.ndarray):
-            if img.dtype == np.uint8:
-                img_8 = img
-            else:
-                img_8 = (img * 255).astype(np.uint8)
-            data = BytesIO()
-            if format is None:
-                format = "png"
-            imageio.imwrite(data, img_8, format=format)
-            data.seek(0)
-            image = data.read()
-        return base64.encodebytes(image).decode()
-
     def interrogate(self, img, model="clip"):
-        image = self.pack_image(img)
+        image = pack_image(img)
         if model == "clip":
             r = requests.post(
                 self.url + "sdapi/v1/interrogate",
@@ -151,7 +133,7 @@ class Connection:
         return caption
 
     def upscale(self, img, upscaler_1="4x_foolhardy_Remacri", scale=2, **kwargs):
-        image = self.pack_image(img)
+        image = pack_image(img)
         payload = {"image": image, "upscaler_1": upscaler_1, "upscaling_resize": scale}
         payload.update(kwargs)
         r = requests.post(self.url + "sdapi/v1/extra-single-image", json=payload)
@@ -162,6 +144,24 @@ class Connection:
         path = self.prepare_path() + "." + filetype.guess_extension(data)
         Path(path).write_bytes(data)
         return path
+
+def pack_image(self, img, format=None):
+    if isinstance(img, str) or isinstance(img, Path):
+        image = Path(img).read_bytes()
+        if format is None:
+            format = Path(img).suffix.strip(".")
+    if isinstance(img, np.ndarray):
+        if img.dtype == np.uint8:
+            img_8 = img
+        else:
+            img_8 = (img * 255).astype(np.uint8)
+        data = BytesIO()
+        if format is None:
+            format = "png"
+        imageio.imwrite(data, img_8, format=format)
+        data.seek(0)
+        image = data.read()
+    return base64.encodebytes(image).decode()
 
 
 def loopback(n, img, caption_model="clip"):
