@@ -28,7 +28,7 @@ class Connection:
             self.url + "sdapi/v1/txt2img",
             json=payload,
         )
-        path = self.prepare_path()
+        path = prepare_path()
         if r.status_code != 200:
             print(r)
         paths = []
@@ -39,12 +39,6 @@ class Connection:
             Path(p).write_bytes(data)
         return paths
 
-    def prepare_path(self):
-        path = "./sd/" + datetime.datetime.now().isoformat().split(".")[0].replace(
-            ":", "."
-        )
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        return path
 
     def img2img(
         self,
@@ -102,7 +96,7 @@ class Connection:
         }
         payload.update(kwargs)
         r = requests.post(self.url + "sdapi/v1/img2img", json=payload)
-        path = self.prepare_path()
+        path = prepare_path()
         if r.status_code != 200:
             print(r)
             return
@@ -116,6 +110,7 @@ class Connection:
         return paths
 
     def interrogate(self, img, model="clip"):
+        """Model: "clip", or "tagger" """
         image = pack_image(img)
         if model == "clip":
             r = requests.post(
@@ -146,12 +141,12 @@ class Connection:
         if r.status_code != 200:
             print(r)
         data = base64.decodebytes(r.json()["image"].encode())
-        path = self.prepare_path() + "." + filetype.guess_extension(data)
+        path = prepare_path() + "." + filetype.guess_extension(data)
         Path(path).write_bytes(data)
         return path
 
 
-def pack_image(self, img, format=None):
+def pack_image(img, format=None):
     if isinstance(img, str) or isinstance(img, Path):
         image = Path(img).read_bytes()
         if format is None:
@@ -168,6 +163,14 @@ def pack_image(self, img, format=None):
         data.seek(0)
         image = data.read()
     return base64.encodebytes(image).decode()
+
+
+def prepare_path():
+    path = "./sd/" + datetime.datetime.now().isoformat().split(".")[0].replace(
+        ":", "."
+    )
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def loopback(n, img, caption_model="clip"):
