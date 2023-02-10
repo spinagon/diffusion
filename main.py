@@ -1,11 +1,13 @@
 import base64
-import requests
-import numpy as np
-from io import BytesIO
-import imageio
 import datetime
+from io import BytesIO
 from pathlib import Path
+
 import filetype
+import imageio
+import numpy as np
+import requests
+from PIL import Image
 
 default_url = "http://127.0.0.1:7860/"
 
@@ -29,7 +31,6 @@ class Connection:
         path = self.prepare_path()
         if r.status_code != 200:
             print(r)
-            print(r.text)
         paths = []
         for i, image in enumerate(r.json()["images"]):
             data = base64.decodebytes(image.encode())
@@ -62,10 +63,12 @@ class Connection:
         inpaint_padding=64,
         **kwargs
     ):
-        if isinstance(img, str):
+        if isinstance(img, str) or isinstance(img, Path):
             h, w, *_ = imageio.imread(img).shape
         if isinstance(img, np.ndarray):
             h, w, *_ = img.shape
+        if isinstance(img, Image.Image):
+            w, h = img.size
         image = pack_image(img)
         if mask is not None:
             mask = pack_image(mask)
@@ -102,7 +105,6 @@ class Connection:
         path = self.prepare_path()
         if r.status_code != 200:
             print(r)
-            print(r.text)
             return
         paths = []
         for i, image in enumerate(r.json()["images"]):
@@ -127,7 +129,11 @@ class Connection:
                 json={"image": image, "model": "wd14-vit-v2", "threshold": 0.2},
             )
             tags = list(r.json()["caption"].keys())
-            tags = [x for x in tags if x not in ["general", "questionable", "sensitive", "explicit"]]
+            tags = [
+                x
+                for x in tags
+                if x not in ["general", "questionable", "sensitive", "explicit"]
+            ]
             caption = ", ".join(tags)
             caption = caption.replace("(", r"\(").replace(")", r"\)")
         return caption
@@ -139,11 +145,11 @@ class Connection:
         r = requests.post(self.url + "sdapi/v1/extra-single-image", json=payload)
         if r.status_code != 200:
             print(r)
-            print(r.text)
         data = base64.decodebytes(r.json()["image"].encode())
         path = self.prepare_path() + "." + filetype.guess_extension(data)
         Path(path).write_bytes(data)
         return path
+
 
 def pack_image(self, img, format=None):
     if isinstance(img, str) or isinstance(img, Path):
@@ -165,7 +171,6 @@ def pack_image(self, img, format=None):
 
 
 def loopback(n, img, caption_model="clip"):
-    from PIL import Image
     for i in range(n):
         display(Image.fromarray(imageio.imread(img)).resize((128, 128)))
         caption = conn.interrogate(img, model=caption_model)

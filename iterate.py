@@ -1,7 +1,8 @@
+import argparse
+import sys
+
 from matplotlib import pyplot as plt
 from spinagon.diffusion import img2img
-import sys
-import argparse
 
 
 def process(img, denoise=0.1, steps=40):
