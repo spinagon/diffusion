@@ -53,21 +53,26 @@ class Connection:
         r = requests.get(self.endpoint + "/find_user", headers=headers)
         return r.json()
 
-    def txt2img(self, prompt, options=None):
-        path = prepare_path(prompt) + ".webp"
-        uuid = self.generate(prompt, options)
-        d = self.await_result(uuid, "image")
-        return save(d, path)
+    def txt2img(self, prompt, options=None, **kwargs):
+        return self.common2img(prompt, img=None, options=options, **kwargs)
 
-    def img2img(self, prompt, img, options=None, denoise=0.55):
+    def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
+        return self.common2img(prompt, img=img, options=options, denoising_strength=denoise, **kwargs)
+
+    def common2img(self, prompt, img=None, options=None, **kwargs):
         path = prepare_path(prompt) + ".webp"
         if options is None:
             options = {}
-        options["denoising_strength"] = denoise
-        options["sampler_name"] = "k_euler_a"
-        uuid = self.generate(prompt, source_image=pack_image(img), options=options)
+        if img is not None:
+            options["sampler_name"] = "k_euler_a"
+        options.update(kwargs)
+        if img is not None:
+            uuid = self.generate(prompt, source_image=pack_image(img), options=options)
+        else:
+            uuid = self.generate(prompt, options=options)
         d = self.await_result(uuid, "image")
         return save(d, path)
+
 
     def caption(self, img):
         uuid = self.interrogate(img, "caption")
