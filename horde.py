@@ -5,6 +5,8 @@ import datetime
 import base64
 from io import BytesIO
 import re
+from PIL import Image
+from PyQt5 import QtCore, QtGui
 
 
 class Connection:
@@ -26,20 +28,29 @@ class Connection:
             print(r)
             print(r.text)
 
-    def generate(self, prompt, source_image=None, options=None):
-        if options == None:
+    def generate(self, prompt, options=None, **kwargs):
+        if options is None:
             options = {}
         headers = {"apikey": self.api_key}
         if "seed" in options:
             options["seed"] = str(options["seed"])
         params = {"sampler_name": "k_dpmpp_2m", "steps": 20}
         params.update(options)
-        payload = {"prompt": prompt, "params": params, "models": ["Deliberate"]}
-        if source_image:
-            payload["source_image"] = source_image
-        r = requests.post(
-            self.endpoint + "/generate/async", json=payload, headers=headers
-        )
+        payload = {
+            "prompt": prompt,
+            "params": params,
+            "models": ["Deliberate"],
+            "shared": True,
+        }
+        payload.update(kwargs)
+        for i in range(3):
+            r = requests.post(
+                self.endpoint + "/generate/async", json=payload, headers=headers
+            )
+            if r.status_code != 403:
+                break
+            else:
+                print(r.text())
         try:
             uuid = r.json()["id"]
         except Exception as e:
@@ -57,9 +68,31 @@ class Connection:
         return self.common2img(prompt, img=None, options=options, **kwargs)
 
     def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
-        return self.common2img(prompt, img=img, options=options, denoising_strength=denoise, **kwargs)
+        h, w = dimension(img)
+        dim = {"height": h, "width": w}
+        if options is None:
+            options = {}
+        options.update(dim)
+        return self.common2img(
+            prompt, img=img, options=options, denoising_strength=denoise, **kwargs
+        )
 
-    def common2img(self, prompt, img=None, options=None, **kwargs):
+    def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
+        h, w = dimension(img)
+        dim = {"height": h, "width": w}
+        if options is None:
+            options = {}
+        options.update(dim)
+        return self.common2img(
+            prompt,
+            img=img,
+            mask=mask,
+            options=options,
+            denoising_strength=denoise,
+            **kwargs
+        )
+
+    def common2img(self, prompt, img=None, mask=None, options=None, **kwargs):
         path = prepare_path(prompt) + ".webp"
         if options is None:
             options = {}
@@ -67,12 +100,20 @@ class Connection:
             options["sampler_name"] = "k_euler_a"
         options.update(kwargs)
         if img is not None:
-            uuid = self.generate(prompt, source_image=pack_image(img), options=options)
+            if mask is not None:
+                uuid = self.generate(
+                    prompt,
+                    source_image=pack_image(img),
+                    source_mask=pack_image(mask),
+                    source_processing="inpainting",
+                    options=options,
+                )
+            else:
+                uuid = self.generate(prompt, source_image=pack_image(img), options=options)
         else:
             uuid = self.generate(prompt, options=options)
         d = self.await_result(uuid, "image")
         return save(d, path)
-
 
     def caption(self, img):
         uuid = self.interrogate(img, "caption")
@@ -97,15 +138,23 @@ class Connection:
             if d.get("finished", 0) == 1 or d.get("state", 0) == "done":
                 return d
 
+
 def prepare_path(prompt=""):
-    path = "./sd/" + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".") + "_" + get_slug(prompt)
+    path = (
+        "./sd/"
+        + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
+        + "_"
+        + get_slug(prompt)
+    )
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def save(result, path):
-    data = requests.get(result["generations"][0]["img"]).content
-    Path(path).write_bytes(data)
+    img_url = result["generations"][0].pop("img")
+    data = requests.get(img_url).content
+    info = str(result).encode()
+    Path(path).write_bytes(data + info)
     return path
 
 
@@ -126,5 +175,32 @@ def pack_image(img, format=None):
         image = data.getvalue()
     return base64.encodebytes(image).decode()
 
+
 def get_slug(prompt):
-    return '_'.join(re.findall("[a-zA-Z]+", prompt))[:40]
+    return "_".join(re.findall("[a-zA-Z#]+", prompt))[:40]
+
+
+def webp_to_image(name):
+    img = QtGui.QImage(name)
+    buf = QtCore.QBuffer()
+    img.save(buf, format="png")
+    bb = BytesIO(buf.data())
+    return Image.open(bb)
+
+
+def dimension(img):
+    if isinstance(img, np.ndarray):
+        h, w = img.shape[:2]
+    if isinstance(img, str) or isinstance(img, Path):
+        h, w = Image.open(img).size
+    shorter = min(h, w)
+    longer = max(h, w)
+    longer = int(round(longer / shorter * 512 / 64) * 64)
+    shorter = 512
+    if w < h:
+        width = shorter
+        height = longer
+    else:
+        width = longer
+        height = shorter
+    return height, width
