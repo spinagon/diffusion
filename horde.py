@@ -141,6 +141,7 @@ class Connection:
 
 
 def prepare_path(prompt=""):
+    time.sleep(0.02)
     path = (
         "./sd/"
         + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
@@ -194,7 +195,11 @@ def dimension(img):
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
     if isinstance(img, str) or isinstance(img, Path):
-        w, h = Image.open(img).size
+        img = Path(img)
+        if img.suffix == ".webp":
+            w, h = Webp(img).to_image().size
+        else:
+            w, h = Image.open(img).size
     shorter = min(h, w)
     longer = max(h, w)
     longer = int(round(longer / shorter * 512 / 64) * 64)
@@ -210,7 +215,10 @@ def dimension(img):
 
 class Webp():
     def __init__(self, name):
-        self.name = name
+        if isinstance(name, Path):
+            self.name = name.as_posix()
+        else:
+            self.name = name
         self.data = None
 
     def read_data(self):
