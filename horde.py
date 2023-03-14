@@ -7,6 +7,7 @@ from io import BytesIO
 import re
 from PIL import Image
 from PyQt5 import QtCore, QtGui
+import imageio
 
 
 class Connection:
@@ -93,7 +94,7 @@ class Connection:
         )
 
     def common2img(self, prompt, img=None, mask=None, options=None, **kwargs):
-        path = prepare_path(prompt) + ".webp"
+        path = prepare_path(prompt)
         if options is None:
             options = {}
         if img is not None:
@@ -154,7 +155,8 @@ def save(result, path):
     img_url = result["generations"][0].pop("img")
     data = requests.get(img_url).content
     info = str(result).encode()
-    Path(path).write_bytes(data + info)
+    seed = result["generations"][0]["seed"]
+    Path(path + "_" + seed + ".webp").write_bytes(data + info)
     return path
 
 
@@ -177,7 +179,7 @@ def pack_image(img, format=None):
 
 
 def get_slug(prompt):
-    return "_".join(re.findall("[a-zA-Z#]+", prompt))[:40]
+    return "_".join(re.findall("[a-zA-Z#0-9]+", prompt))[:40]
 
 
 def webp_to_image(name):
@@ -192,7 +194,7 @@ def dimension(img):
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
     if isinstance(img, str) or isinstance(img, Path):
-        h, w = Image.open(img).size
+        w, h = Image.open(img).size
     shorter = min(h, w)
     longer = max(h, w)
     longer = int(round(longer / shorter * 512 / 64) * 64)
@@ -204,3 +206,25 @@ def dimension(img):
         width = longer
         height = shorter
     return height, width
+
+
+class Webp():
+    def __init__(self, name):
+        self.name = name
+        self.data = None
+
+    def read_data(self):
+        if self.data is None:
+            qimage = QtGui.QImage(self.name)
+            buf = QtCore.QBuffer()
+            qimage.save(buf, format="png")
+            self.data = BytesIO(buf.data())
+        self.data.seek(0)
+
+    def to_image(self):
+        self.read_data()
+        return Image.open(self.data)
+
+    def to_array(self):
+        self.read_data()
+        return imageio.imread(self.data)
