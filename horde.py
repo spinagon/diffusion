@@ -318,3 +318,10 @@ class Webp():
     def to_array(self):
         self.read_data()
         return imageio.imread(self.data)
+
+class Requests_backend():
+    def get(*args, **kwargs):
+        return requests.get(*args, **kwargs)
+
+    def post(*args, **kwargs):
+        return requests.post(*args, **kwargs)    
