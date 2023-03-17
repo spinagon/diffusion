@@ -11,110 +11,54 @@ import imageio
 
 
 class Connection:
-    def __init__(self, endpoint="https://stablehorde.net/api/v2", api_key=None):
+    def __init__(self, endpoint="https://stablehorde.net/api/v2", apikey=None):
         self.endpoint = endpoint
-        self.api_key = api_key
-
-    def status(self, uuid, kind):
-        if kind == "image":
-            r = requests.get(self.endpoint + "/generate/status/" + str(uuid))
-        elif kind == "interrogate":
-            r = requests.get(self.endpoint + "/interrogate/status/" + str(uuid))
-        else:
-            raise Exception("Unknown kind of status: {}".format(kind))
-        try:
-            return r.json()
-        except Exception as e:
-            print(e)
-            print(r)
-            print(r.text)
-
-    def generate(self, prompt, options=None, **kwargs):
-        if options is None:
-            options = {}
-        headers = {"apikey": self.api_key}
-        if "seed" in options:
-            options["seed"] = str(options["seed"])
-        params = {"sampler_name": "k_dpmpp_2m", "steps": 20}
-        params.update(options)
-        payload = {
-            "prompt": prompt,
-            "params": params,
-            "models": ["Deliberate"],
-            "shared": True,
-        }
-        payload.update(kwargs)
-        for i in range(3):
-            r = requests.post(
-                self.endpoint + "/generate/async", json=payload, headers=headers
-            )
-            if r.status_code != 403:
-                break
-            else:
-                print(r.text())
-        try:
-            uuid = r.json()["id"]
-        except Exception as e:
-            print(e)
-            print(r)
-            print(r.text)
-        return uuid
+        self.apikey = apikey
+        self.jobs = []
 
     def find_user(self):
-        headers = {"apikey": self.api_key}
+        headers = {"apikey": self.apikey}
         r = requests.get(self.endpoint + "/find_user", headers=headers)
         return r.json()
 
     def txt2img(self, prompt, options=None, **kwargs):
-        return self.common2img(prompt, img=None, options=options, **kwargs)
+        job = Job(prompt, self.apikey, self.endpoint)
+        job.params.update(options or {})
+        job.params.update(kwargs)
+        self.jobs.append(job)
+        result = job.run()
+        job.clean()
+        return result
 
     def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
+        job = Job(prompt, self.apikey, self.endpoint)
+        job.set_image(img)
         h, w = dimension(img)
-        dim = {"height": h, "width": w}
-        if options is None:
-            options = {}
-        options.update(dim)
-        return self.common2img(
-            prompt, img=img, options=options, denoising_strength=denoise, **kwargs
-        )
+        job.params["height"] = h
+        job.params["width"] = w
+        job.params["denoising_strength"] = denoise
+        job.params.update(options or {})
+        job.params.update(kwargs)
+        self.jobs.append(job)
+        result = job.run()
+        job.clean()
+        return result
 
     def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
+        job = Job(prompt, self.apikey, self.endpoint)
+        job.set_image(img)
+        job.set_mask(mask)
+        job.payload["source_processing"] = "inpainting"
         h, w = dimension(img)
-        dim = {"height": h, "width": w}
-        if options is None:
-            options = {}
-        options.update(dim)
-        return self.common2img(
-            prompt,
-            img=img,
-            mask=mask,
-            options=options,
-            denoising_strength=denoise,
-            **kwargs
-        )
-
-    def common2img(self, prompt, img=None, mask=None, options=None, **kwargs):
-        path = prepare_path(prompt)
-        if options is None:
-            options = {}
-        if img is not None:
-            options["sampler_name"] = "k_euler_a"
-        options.update(kwargs)
-        if img is not None:
-            if mask is not None:
-                uuid = self.generate(
-                    prompt,
-                    source_image=pack_image(img),
-                    source_mask=pack_image(mask),
-                    source_processing="inpainting",
-                    options=options,
-                )
-            else:
-                uuid = self.generate(prompt, source_image=pack_image(img), options=options)
-        else:
-            uuid = self.generate(prompt, options=options)
-        d = self.await_result(uuid, "image")
-        return save(d, path)
+        job.params["height"] = h
+        job.params["width"] = w
+        job.params["denoising_strength"] = denoise
+        job.params.update(options or {})
+        job.params.update(kwargs)
+        self.jobs.append(job)
+        result = job.run()
+        job.clean()
+        return result
 
     def caption(self, img):
         uuid = self.interrogate(img, "caption")
@@ -122,22 +66,12 @@ class Connection:
         return d
 
     def interrogate(self, img, kind="caption"):
-        headers = {"apikey": self.api_key}
+        headers = {"apikey": self.apikey}
         payload = {"forms": [{"name": kind}], "source_image": pack_image(img)}
         r = requests.post(
             self.endpoint + "/interrogate/async", json=payload, headers=headers
         )
         return r.json()["id"]
-
-    def await_result(self, uuid, kind):
-        wait_list = [5, 2, 1, 1, 2, 3, 4] + [15] * 100
-        for i in range(100):
-            time.sleep(wait_list[i])
-            d = self.status(uuid, kind)
-            if "message" in d:
-                print(message)
-            if d.get("finished", 0) == 1 or d.get("state", 0) == "done":
-                return d
 
 
 def prepare_path(prompt=""):
@@ -153,11 +87,15 @@ def prepare_path(prompt=""):
 
 
 def save(result, path):
-    img_url = result["generations"][0].pop("img")
-    data = requests.get(img_url).content
-    info = str(result).encode()
-    seed = result["generations"][0]["seed"]
-    Path(path + "_" + seed + ".webp").write_bytes(data + info)
+    try:
+        img_url = result["generations"][0].pop("img")
+        data = requests.get(img_url).content
+        info = str(result).encode()
+        seed = result["generations"][0]["seed"]
+        Path(path + "_" + seed + ".webp").write_bytes(data + info)
+    except Exception as e:
+        print(e)
+        print(result)
     return path
 
 
@@ -211,6 +149,115 @@ def dimension(img):
         width = longer
         height = shorter
     return height, width
+
+
+class Job():
+    def __init__(self, prompt, apikey, endpoint):
+        self.prompt = prompt
+        self.apikey = apikey
+        self.endpoint = endpoint
+        self.params = {"sampler_name": "k_dpmpp_2m", "steps": 20}
+        self.payload = {
+            "prompt": self.prompt,
+            "params": self.params,
+            "models": ["Deliberate"],
+            "shared": True,
+        }
+        self.state = "created"
+        self.kind = "txt2img"
+        self.source_image = None
+        self.source_mask = None
+        self.result = None
+        self.path = prepare_path(self.prompt)
+
+    def set_image(self, image):
+        self.source_image = pack_image(image)
+        self.payload["source_image"] = self.source_image
+        self.params["sampler_name"] = "k_euler_a"
+        if self.source_mask is None:
+            self.kind = "img2img"
+
+    def set_mask(self, mask):
+        self.source_mask = pack_image(mask)
+        self.payload["source_mask"] = self.source_mask
+        self.kind = "inpaint"
+        self.params["denoising_strength"] = 1
+        self.payload["source_processing"] = "inpainting"
+
+    def run(self):
+        self.started_at = datetime.datetime.now()
+        self.validate_params()
+        self.generate()
+        self.await_result()
+        self.finished_at = datetime.datetime.now()
+        return save(self.result, self.path)
+
+    def validate_params(self):
+        if "seed" in self.params:
+            self.params["seed"] = str(self.params["seed"])
+
+    def clean(self):
+        self.source_image = None
+        self.source_mask = None
+        self.payload["source_image"] = None
+        self.payload["source_mask"] = None
+
+    def generate(self):
+        headers = {"apikey": self.apikey}
+        for i in range(3):
+            r = requests.post(
+                self.endpoint + "/generate/async", json=self.payload, headers=headers
+            )
+            if r.status_code != 403:
+                break
+            else:
+                print(r.text())
+        try:
+            uuid = r.json()["id"]
+        except Exception as e:
+            self.state = "failed"
+            self.result = (r, r.text())
+            raise e
+        self.uuid = uuid
+        self.state = "running"
+
+    def status(self):
+        if self.kind == "interrogate":
+            r = requests.get(self.endpoint + "/interrogate/status/" + self.uuid)
+        else:
+            r = requests.get(self.endpoint + "/generate/status/" + self.uuid)
+        try:
+            return r.json()
+        except Exception as e:
+            print(e)
+            print(r)
+            print(r.text)
+
+    def await_result(self):
+        wait_list = [7, 1, 1, 2, 2, 7, 10, 10] + [10] * 100
+        waited = 0
+        for i in range(100):
+            time.sleep(wait_list[i])
+            waited += wait_list[i]
+            d = self.status()
+            if "message" in d:
+                print(message)
+            if d.get("done", False):
+                self.result = d
+                self.result["waited"] = waited
+                self.state = "done"
+                return
+
+    def check_state(self):
+        if self.result is not None:
+            self.state = "done"
+
+    def __str__(self):
+        return repr(self)
+
+    def __repr__(self):
+        self.check_state()
+        return "Job {}, state: {}".format(id(self), self.state)
 
 
 class Webp():
