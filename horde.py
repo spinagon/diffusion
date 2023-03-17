@@ -60,18 +60,13 @@ class Connection:
         job.clean()
         return result
 
-    def caption(self, img):
-        uuid = self.interrogate(img, "caption")
-        d = self.await_result(uuid, "interrogate")
-        return d
-
-    def interrogate(self, img, kind="caption"):
-        headers = {"apikey": self.apikey}
-        payload = {"forms": [{"name": kind}], "source_image": pack_image(img)}
-        r = requests.post(
-            self.endpoint + "/interrogate/async", json=payload, headers=headers
-        )
-        return r.json()["id"]
+    def interrogate(self, img, caption_type="caption"):
+        """
+        caption_type="caption" | "interrogation" | "nsfw"
+        """
+        job = Interrogation_job(img, self.apikey, self.endpoint, caption_type)
+        result = job.run()
+        return result
 
 
 def prepare_path(prompt=""):
@@ -234,15 +229,15 @@ class Job():
             print(r.text)
 
     def await_result(self):
-        wait_list = [7, 1, 1, 2, 2, 7, 10, 10] + [10] * 100
+        wait_list = [7, 1, 1, 2, 2, 7, 10, 10] + [6] * 100
         waited = 0
-        for i in range(100):
+        for i in range(30):
             time.sleep(wait_list[i])
             waited += wait_list[i]
             d = self.status()
             if "message" in d:
                 print(message)
-            if d.get("done", False):
+            if d.get("done", False) or d.get("state", None) == "done":
                 self.result = d
                 self.result["waited"] = waited
                 self.state = "done"
@@ -258,6 +253,46 @@ class Job():
     def __repr__(self):
         self.check_state()
         return "Job {}, state: {}".format(id(self), self.state)
+
+
+class Interrogation_job(Job):
+    def __init__(self, img, apikey, endpoint, caption_type="caption"):
+        self.source_image = img
+        self.apikey = apikey
+        self.endpoint = endpoint
+        self.caption_type = caption_type
+        self.payload = {
+            "source_image": pack_image(img),
+            "forms": [{"name": caption_type}],
+        }
+        self.state = "created"
+        self.kind = "interrogate"
+
+    def run(self):
+        self.started_at = datetime.datetime.now()
+        self.interrogate()
+        self.await_result()
+        self.finished_at = datetime.datetime.now()
+        return self.result
+
+    def interrogate(self):
+        headers = {"apikey": self.apikey}
+        for i in range(3):
+            r = requests.post(
+                self.endpoint + "/interrogate/async", json=self.payload, headers=headers
+            )
+            if r.status_code != 403:
+                break
+            else:
+                print(r.text)
+        try:
+            uuid = r.json()["id"]
+        except Exception as e:
+            self.state = "failed"
+            self.result = (r, r.text)
+            raise e
+        self.uuid = uuid
+        self.state = "running"
 
 
 class Webp():
