@@ -1,13 +1,29 @@
-import requests
-import time
-from pathlib import Path
-import datetime
+# import requests
 import base64
-from io import BytesIO
+import datetime
 import re
-from PIL import Image
-from PyQt5 import QtCore, QtGui
+import time
+from io import BytesIO
+from pathlib import Path
+
 import imageio
+from PIL import Image
+
+try:
+    from .requests_backend import Http_backend
+except ImportError as e:
+    print(e)
+    import requests as reqs
+
+    class Http_backend:
+        def get(self, *args, **kwargs):
+            return reqs.get(*args, **kwargs)
+
+        def post(self, *args, **kwargs):
+            return reqs.post(*args, **kwargs)
+
+
+requests = Http_backend()
 
 
 class Connection:
@@ -116,14 +132,6 @@ def get_slug(prompt):
     return "_".join(re.findall("[a-zA-Z#0-9]+", prompt))[:40]
 
 
-def webp_to_image(name):
-    img = QtGui.QImage(name)
-    buf = QtCore.QBuffer()
-    img.save(buf, format="png")
-    bb = BytesIO(buf.data())
-    return Image.open(bb)
-
-
 def dimension(img):
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
@@ -146,7 +154,7 @@ def dimension(img):
     return height, width
 
 
-class Job():
+class Job:
     def __init__(self, prompt, apikey, endpoint):
         self.prompt = prompt
         self.apikey = apikey
@@ -295,8 +303,10 @@ class Interrogation_job(Job):
         self.state = "running"
 
 
-class Webp():
+class Webp:
     def __init__(self, name):
+        from PyQt5 import QtCore, QtGui
+
         if isinstance(name, Path):
             self.name = name.as_posix()
         else:
@@ -318,10 +328,3 @@ class Webp():
     def to_array(self):
         self.read_data()
         return imageio.imread(self.data)
-
-class Requests_backend():
-    def get(*args, **kwargs):
-        return requests.get(*args, **kwargs)
-
-    def post(*args, **kwargs):
-        return requests.post(*args, **kwargs)    
