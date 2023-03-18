@@ -176,6 +176,7 @@ class Job:
         except Exception as e:
             self.state = "failed"
             self.result = (r, r.text)
+            print(self.result)
             raise e
         self.uuid = uuid
         self.state = "running"
