@@ -76,7 +76,7 @@ def pack_image(img, format=None):
         image = Path(img).read_bytes()
         if format is None:
             format = Path(img).suffix.strip(".")
-    if isinstance(img, np.ndarray):
+    elif isinstance(img, np.ndarray):
         if img.dtype == np.uint8:
             img_8 = img
         else:
@@ -86,6 +86,8 @@ def pack_image(img, format=None):
             format = "png"
         imageio.imwrite(data, img_8, format=format)
         image = data.getvalue()
+    elif isinstance(img, bytes):
+        image = img
     return base64.encodebytes(image).decode()
 
 
