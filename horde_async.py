@@ -170,12 +170,12 @@ class Job:
             if r.status_code != 403:
                 break
             else:
-                print(r.text())
+                print(r.text)
         try:
             uuid = r.json()["id"]
         except Exception as e:
             self.state = "failed"
-            self.result = (r, r.text())
+            self.result = (r, r.text)
             raise e
         self.uuid = uuid
         self.state = "running"
