@@ -157,9 +157,6 @@ class Job:
         if "height" in self.params:
             self.params["height"] = round(self.params["height"] / 64) * 64
         if "width" in self.params:
-            print(self.params["width"])
-            print(self.params["width"] / 64)
-            print(round(self.params["width"] / 64))
             self.params["width"] = round(self.params["width"] / 64) * 64
 
     async def clean(self):
