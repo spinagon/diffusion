@@ -154,6 +154,10 @@ class Job:
     async def validate_params(self):
         if "seed" in self.params:
             self.params["seed"] = str(self.params["seed"])
+        if "height" in self.params:
+            self.params["height"] = round(self.params["height"] / 64) * 64
+        if "width" in self.params:
+            self.params["width"] = round(self.params["width"] / 64) * 64
 
     async def clean(self):
         self.source_image = None
