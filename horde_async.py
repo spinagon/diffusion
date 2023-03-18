@@ -94,10 +94,7 @@ async def dimension(img):
         h, w = img.shape[:2]
     if isinstance(img, str) or isinstance(img, Path):
         img = Path(img)
-        if img.suffix == ".webp":
-            w, h = Webp(img).to_image().size
-        else:
-            w, h = Image.open(img).size
+        w, h = Image.open(img).size
     shorter = min(h, w)
     longer = max(h, w)
     longer = int(round(longer / shorter * 512 / 64) * 64)
