@@ -153,8 +153,10 @@ class Job:
 
     async def run(self):
         self.started_at = datetime.datetime.now()
+        print(f"Started: {self.prompt}")
         await self.validate_params()
         await self.generate()
+        print(f"Got uuid: {self.prompt} : {self.uuid}")
         await self.await_result()
         self.finished_at = datetime.datetime.now()
         return self.result
@@ -184,13 +186,13 @@ class Job:
             if r.status_code != 403:
                 break
             else:
-                print(r.text)
+                print("generate failed, ", r.text)
         try:
             uuid = r.json()["id"]
         except Exception as e:
             self.state = "failed"
             self.result = (r, r.text)
-            print(self.result)
+            print("generate failed, ", self.result)
             raise e
         self.uuid = uuid
         self.state = "running"
@@ -203,6 +205,7 @@ class Job:
         try:
             return r.json()
         except Exception as e:
+            print("status failed")
             print(e)
             print(r)
             print(r.text)
@@ -215,7 +218,9 @@ class Job:
             waited += wait_list[i]
             d = await self.status()
             if "message" in d:
-                print(d["message"])
+                print("Message in status:", d["message"])
+                await asyncio.sleep(1)
+                waited += 1
             if d.get("done", False) or d.get("state", None) == "done":
                 self.result = d
                 self.result["waited"] = waited
