@@ -206,7 +206,7 @@ class Job:
             return r.json()
         except Exception as e:
             print("status failed")
-            print(e)
+            print(repr(e))
             print(r)
             print(r.text)
 
@@ -217,8 +217,8 @@ class Job:
             await asyncio.sleep(wait_list[i])
             waited += wait_list[i]
             d = await self.status()
-            if i % 10 == 7:
-                print(d)
+            if i % 10 == 9:
+                print(d, waited)
             if "message" in d:
                 print("Message in status:", d["message"])
                 await asyncio.sleep(1)
