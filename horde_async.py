@@ -11,10 +11,16 @@ import numpy as np
 from PIL import Image
 
 from .aiohttp_backend import Http_backend
-from .horde_base import BaseConnection
+
+# from .horde_base import BaseConnection
 
 
-class Connection(BaseConnection):
+class Connection:
+    def __init__(self, endpoint="https://stablehorde.net/api/v2", apikey=None):
+        self.endpoint = endpoint
+        self.apikey = apikey
+        self.jobs = []
+
     async def init(self):
         global requests
         requests = await Http_backend.init()
@@ -125,6 +131,7 @@ class Job:
             "params": self.params,
             "models": ["Deliberate"],
             "shared": True,
+            "nsfw": True,
         }
         self.state = "created"
         self.kind = "txt2img"
