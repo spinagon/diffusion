@@ -166,6 +166,8 @@ class Job:
             self.params["height"] = round(self.params["height"] / 64) * 64
         if "width" in self.params:
             self.params["width"] = round(self.params["width"] / 64) * 64
+        if "ct" in self.params:
+            self.params["control_type"] = self.params.pop("ct")
 
     async def clean(self):
         self.source_image = None
