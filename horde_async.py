@@ -7,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 
 import imageio
+import numpy as np
 from PIL import Image
 
 from .aiohttp_backend import Http_backend
