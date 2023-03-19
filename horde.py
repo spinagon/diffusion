@@ -165,6 +165,7 @@ class Job:
             "params": self.params,
             "models": ["Deliberate"],
             "shared": True,
+            "nsfw": True,
         }
         self.state = "created"
         self.kind = "txt2img"

@@ -12,8 +12,6 @@ from PIL import Image
 
 from .aiohttp_backend import Http_backend
 
-# from .horde_base import BaseConnection
-
 
 class Connection:
     def __init__(self, endpoint="https://stablehorde.net/api/v2", apikey=None):
