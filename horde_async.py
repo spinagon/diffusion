@@ -211,10 +211,10 @@ class Job:
             print(r.text)
 
     async def await_result(self):
-        wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10] + [6] * 100
+        wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10, 6]
         waited = 0
         for i in range(100):
-            await asyncio.sleep(wait_list[i])
+            await asyncio.sleep(wait_list[min(i, len(wait_list) - 1)])
             waited += wait_list[i]
             d = await self.status()
             if i % 10 == 9:
