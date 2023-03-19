@@ -35,7 +35,7 @@ class Connection(BaseConnection):
 
     async def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
         job = Job(prompt, self.apikey, self.endpoint)
-        job.set_image(img)
+        await job.set_image(img)
         h, w = await dimension(img)
         job.params["height"] = h
         job.params["width"] = w
@@ -49,7 +49,7 @@ class Connection(BaseConnection):
 
     async def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
         job = Job(prompt, self.apikey, self.endpoint)
-        job.set_image(img)
+        await job.set_image(img)
         job.set_mask(mask)
         job.payload["source_processing"] = "inpainting"
         h, w = await dimension(img)
