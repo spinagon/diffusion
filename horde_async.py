@@ -213,10 +213,12 @@ class Job:
     async def await_result(self):
         wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10] + [6] * 100
         waited = 0
-        for i in range(30):
+        for i in range(100):
             await asyncio.sleep(wait_list[i])
             waited += wait_list[i]
             d = await self.status()
+            if i % 10 == 7:
+                print(d)
             if "message" in d:
                 print("Message in status:", d["message"])
                 await asyncio.sleep(1)
@@ -226,6 +228,7 @@ class Job:
                 self.result["waited"] = waited
                 self.state = "done"
                 return
+        print("await_result timeout", d)
 
     def check_state(self):
         if self.result is not None:
