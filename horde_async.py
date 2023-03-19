@@ -97,6 +97,9 @@ async def dimension(img):
     if isinstance(img, str) or isinstance(img, Path):
         img = Path(img)
         w, h = Image.open(img).size
+    if isinstance(img, bytes):
+        img = BytesIO(img)
+        w, h = Image.open(img).size
     shorter = min(h, w)
     longer = max(h, w)
     longer = int(round(longer / shorter * 512 / 64) * 64)
