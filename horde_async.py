@@ -215,7 +215,7 @@ class Job:
             waited += wait_list[i]
             d = await self.status()
             if "message" in d:
-                print(message)
+                print(d["message"])
             if d.get("done", False) or d.get("state", None) == "done":
                 self.result = d
                 self.result["waited"] = waited
