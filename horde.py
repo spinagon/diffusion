@@ -221,7 +221,9 @@ class Job:
         else:
             r = requests.get(self.endpoint + "/generate/status/" + self.uuid)
         try:
-            return r.json()
+            status = r.json()
+            self.last_status = status
+            return status
         except Exception as e:
             print(e)
             print(r)
