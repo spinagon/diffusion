@@ -157,7 +157,12 @@ class Job:
         await self.validate_params()
         await self.generate()
         print(f"Got uuid: {self.prompt} : {self.uuid}")
-        await self.await_result()
+        for i in range(2):
+            await self.await_result()
+            if self.result == "timeout":
+                continue
+            else:
+                break
         self.finished_at = datetime.datetime.now()
         return self.result
 
@@ -230,6 +235,7 @@ class Job:
                 self.state = "done"
                 return
         print("await_result timeout", d)
+        self.result = "timeout"
 
     def check_state(self):
         if self.result is not None:

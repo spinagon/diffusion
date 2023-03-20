@@ -11,19 +11,9 @@ from PIL import Image
 
 try:
     from .requests_backend import Http_backend
-except ImportError as e:
-    print(e)
-    import requests as reqs
-
-    class Http_backend:
-        def get(self, *args, **kwargs):
-            return reqs.get(*args, **kwargs)
-
-        def post(self, *args, **kwargs):
-            return reqs.post(*args, **kwargs)
-
-
-requests = Http_backend()
+    requests = Http_backend()
+except (ImportError, SystemError) as e:
+    import requests
 
 
 class Connection:
@@ -215,12 +205,12 @@ class Job:
             if r.status_code != 403:
                 break
             else:
-                print(r.text())
+                print(r.text)
         try:
             uuid = r.json()["id"]
         except Exception as e:
             self.state = "failed"
-            self.result = (r, r.text())
+            self.result = (r, r.text)
             raise e
         self.uuid = uuid
         self.state = "running"
