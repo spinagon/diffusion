@@ -210,7 +210,7 @@ class Job:
             r = await requests.get(self.endpoint + "/generate/status/" + self.uuid)
         try:
             status = r.json()
-            status["prompt" = self.prompt]
+            status["prompt"] = self.prompt
             self.last_status = status
             return status
         except Exception as e:
