@@ -130,6 +130,7 @@ class Job:
             "models": ["Deliberate"],
             "shared": True,
             "nsfw": True,
+            "replacement_filter": True,
         }
         self.state = "created"
         self.kind = "txt2img"

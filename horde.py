@@ -11,6 +11,7 @@ from PIL import Image
 
 try:
     from .requests_backend import Http_backend
+
     requests = Http_backend()
 except (ImportError, SystemError) as e:
     import requests
@@ -156,6 +157,7 @@ class Job:
             "models": ["Deliberate"],
             "shared": True,
             "nsfw": True,
+            "replacement_filter": True,
         }
         self.state = "created"
         self.kind = "txt2img"
