@@ -224,6 +224,7 @@ class Job:
             r = requests.get(self.endpoint + "/generate/status/" + self.uuid)
         try:
             status = r.json()
+            status["prompt" = self.prompt]
             self.last_status = status
             return status
         except Exception as e:
@@ -237,7 +238,9 @@ class Job:
         for i in range(30):
             time.sleep(wait_list[i])
             waited += wait_list[i]
-            d = self.status()
+            self.status()
+            d = self.last_status
+            d["waited"] = waited
             if "message" in d:
                 print(d["message"])
             if d.get("done", False) or d.get("state", None) == "done":

@@ -209,7 +209,10 @@ class Job:
         else:
             r = await requests.get(self.endpoint + "/generate/status/" + self.uuid)
         try:
-            return r.json()
+            status = r.json()
+            status["prompt" = self.prompt]
+            self.last_status = status
+            return status
         except Exception as e:
             print("status failed")
             print(repr(e))
@@ -223,9 +226,11 @@ class Job:
             index = min(i, len(wait_list) - 1)
             await asyncio.sleep(wait_list[index])
             waited += wait_list[index]
-            d = await self.status()
+            await self.status()
+            d = self.last_status
+            d["waited"] = waited
             if i % 10 == 9:
-                print(d, waited)
+                print(d)
             if "message" in d:
                 print("Message in status:", d["message"])
                 await asyncio.sleep(1)
