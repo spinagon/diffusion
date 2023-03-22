@@ -235,7 +235,7 @@ class Job:
                 print("Message in status:", d["message"])
                 await asyncio.sleep(1)
                 waited += 1
-            if d.get("done", False) or d.get("state", None) == "done":
+            if (d.get("done", False) or d.get("state", None) == "done") and d.get("processing", 0) == 0::
                 self.result = d
                 self.result["waited"] = waited
                 self.state = "done"

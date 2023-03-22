@@ -5,6 +5,7 @@ import re
 import time
 from io import BytesIO
 from pathlib import Path
+import pprint
 
 import imageio
 from PIL import Image
@@ -72,6 +73,7 @@ class Connection:
         caption_type="caption" | "interrogation" | "nsfw"
         """
         job = Interrogation_job(img, self.apikey, self.endpoint, caption_type)
+        self.jobs.append(job)
         result = job.run()
         return result
 
@@ -92,11 +94,12 @@ def save(result, path):
     try:
         img_url = result["generations"][0].pop("img")
         data = requests.get(img_url).content
-        info = str(result).encode()
+        info = pprint.pformat(result).encode()
         seed = result["generations"][0]["seed"]
-        Path(path + "_" + seed + ".webp").write_bytes(data + info)
+        path = path + "_" + seed + ".webp"
+        Path(path).write_bytes(data + info)
     except Exception as e:
-        print(e)
+        print(repr(e))
         print(result)
     return path
 
@@ -186,7 +189,8 @@ class Job:
         self.generate()
         self.await_result()
         self.finished_at = datetime.datetime.now()
-        return save(self.result, self.path)
+        self.path = save(self.result, self.path)
+        return self.path
 
     def validate_params(self):
         if "seed" in self.params:
@@ -224,7 +228,7 @@ class Job:
             r = requests.get(self.endpoint + "/generate/status/" + self.uuid)
         try:
             status = r.json()
-            status["prompt"] = self.prompt
+            status["prompt"] = getattr(self, "prompt", "")
             self.last_status = status
             return status
         except Exception as e:
@@ -243,7 +247,7 @@ class Job:
             d["waited"] = waited
             if "message" in d:
                 print(d["message"])
-            if d.get("done", False) or d.get("state", None) == "done":
+            if (d.get("done", False) or d.get("state", None) == "done") and d.get("processing", 0) == 0:
                 self.result = d
                 self.result["waited"] = waited
                 self.state = "done"
