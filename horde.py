@@ -77,6 +77,20 @@ class Connection:
         result = job.run()
         return result
 
+    def models(self):
+        result = requests.get("https://stablehorde.net/api/v2/status/models").json()
+        result = sorted(result, key=lambda x: -x["count"])
+        return result
+
+    def model_stats(self):
+        result = requests.get("https://stablehorde.net/api/v2/stats/img/models").json()
+        result = sorted(result["month"].items(), key=lambda x: -x[1])
+        return result
+
+    def heartbeat(self):
+        result = requests.get("https://stablehorde.net/api/v2/status/heartbeat").json()
+        return result
+
 
 def prepare_path(prompt=""):
     time.sleep(0.02)
@@ -195,6 +209,8 @@ class Job:
     def validate_params(self):
         if "seed" in self.params:
             self.params["seed"] = str(self.params["seed"])
+        if "model" in self.params:
+            self.payload["models"] = [self.params.pop("model")]
 
     def clean(self):
         self.source_image = None
