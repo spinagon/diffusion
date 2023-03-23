@@ -10,12 +10,7 @@ from pathlib import Path
 import imageio
 from PIL import Image
 
-try:
-    from .requests_backend import Http_backend
-
-    requests = Http_backend()
-except (ImportError, SystemError) as e:
-    import requests
+import requests
 
 
 class Connection:
