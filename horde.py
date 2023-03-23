@@ -1,11 +1,11 @@
 # import requests
 import base64
 import datetime
+import pprint
 import re
 import time
 from io import BytesIO
 from pathlib import Path
-import pprint
 
 import imageio
 from PIL import Image
@@ -263,7 +263,9 @@ class Job:
             d["waited"] = waited
             if "message" in d:
                 print(d["message"])
-            if (d.get("done", False) or d.get("state", None) == "done") and d.get("processing", 0) == 0:
+            if (d.get("done", False) or d.get("state", None) == "done") and d.get(
+                "processing", 0
+            ) == 0:
                 self.result = d
                 self.result["waited"] = waited
                 self.state = "done"
