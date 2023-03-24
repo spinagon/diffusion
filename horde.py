@@ -170,6 +170,7 @@ class Job:
             "shared": True,
             "nsfw": True,
             "replacement_filter": True,
+            "trusted_only": False
         }
         self.state = "created"
         self.kind = "txt2img"
