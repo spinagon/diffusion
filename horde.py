@@ -100,17 +100,19 @@ def prepare_path(prompt=""):
 
 
 def save(result, path):
-    try:
-        img_url = result["generations"][0].pop("img")
-        data = requests.get(img_url).content
+    paths = []
+    for i, gen in enumerate(result["generations"]):
         info = pprint.pformat(result).encode()
-        seed = result["generations"][0]["seed"]
-        path = path + "_" + seed + ".webp"
-        Path(path).write_bytes(data + info)
-    except Exception as e:
-        print(repr(e))
-        print(result)
-    return path
+        try:
+            img_url = gen.pop("img")
+            data = requests.get(img_url).content
+            seed = gen["seed"]
+            paths.append(path + "_" + seed + ".webp")
+            Path(paths[-1]).write_bytes(data + info)
+        except Exception as e:
+            print(repr(e))
+            print(result)
+    return paths
 
 
 def pack_image(img, format=None):
