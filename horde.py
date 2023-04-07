@@ -165,7 +165,7 @@ class Job:
         self.prompt = prompt
         self.apikey = apikey
         self.endpoint = endpoint
-        self.params = {"sampler_name": "k_dpmpp_2m", "steps": 20}
+        self.params = {"sampler_name": "k_dpmpp_2m", "steps": 20, "karras": True}
         self.payload = {
             "prompt": self.prompt,
             "params": self.params,
