@@ -52,6 +52,7 @@ class Connection:
         job.set_image(img)
         job.set_mask(mask)
         job.payload["source_processing"] = "inpainting"
+        job.payload["models"] = ["anything_v4_inpainting"]
         h, w = dimension(img)
         job.params["height"] = h
         job.params["width"] = w
@@ -171,7 +172,7 @@ class Job:
             "models": ["Deliberate"],
             "shared": True,
             "nsfw": True,
-            "replacement_filter": True,
+            "replacement_filter": False,
             "trusted_only": False,
         }
         self.state = "created"
