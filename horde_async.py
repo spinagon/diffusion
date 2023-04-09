@@ -160,7 +160,7 @@ class Job:
         print(f"Got uuid: {self.prompt} : {self.uuid}")
         for i in range(2):
             await self.await_result()
-            if self.result == "timeout":
+            if "timeout" in self.result:
                 continue
             else:
                 break
@@ -197,7 +197,7 @@ class Job:
             uuid = r.json()["id"]
         except Exception as e:
             self.state = "failed"
-            self.result = (r, r.text)
+            self.result = {"response": r.text}
             print("generate failed, ", self.result)
             self.uuid = ""
             return
@@ -246,7 +246,7 @@ class Job:
                 self.state = "done"
                 return
         print("await_result timeout", d)
-        self.result = "timeout"
+        self.result = {"timeout": True}
 
     def check_state(self):
         if self.result is not None:
