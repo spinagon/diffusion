@@ -199,7 +199,8 @@ class Job:
             self.state = "failed"
             self.result = (r, r.text)
             print("generate failed, ", self.result)
-            raise e
+            self.uuid = ""
+            return
         self.uuid = uuid
         self.state = "running"
 
