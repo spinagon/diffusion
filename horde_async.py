@@ -223,6 +223,8 @@ class Job:
         wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10, 6]
         waited = 0
         for i in range(100):
+            if self.state == "failed":
+                return
             index = min(i, len(wait_list) - 1)
             await asyncio.sleep(wait_list[index])
             waited += wait_list[index]
