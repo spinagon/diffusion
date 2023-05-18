@@ -171,7 +171,7 @@ class Job:
             "models": ["Deliberate"],
             "shared": True,
             "nsfw": True,
-            "replacement_filter": False,
+            "replacement_filter": True,
             "trusted_only": False,
         }
         self.state = "created"
@@ -211,6 +211,10 @@ class Job:
             self.payload["models"] = [self.params.pop("model")]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
+        if "height" in self.params:
+            self.params["height"] = round(self.params["height"] / 64) * 64
+        if "width" in self.params:
+            self.params["width"] = round(self.params["width"] / 64) * 64
 
     def clean(self):
         self.source_image = None

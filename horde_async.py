@@ -130,7 +130,7 @@ class Job:
             "models": ["Deliberate"],
             "shared": True,
             "nsfw": True,
-            "replacement_filter": False,
+            "replacement_filter": True,
             "trusted_only": False,
         }
         self.state = "created"
@@ -180,6 +180,10 @@ class Job:
             self.params["width"] = round(self.params["width"] / 64) * 64
         if "ct" in self.params:
             self.params["control_type"] = self.params.pop("ct")
+        if "model" in self.params:
+            self.payload["models"] = [self.params.pop("model")]
+        if "models" in self.params:
+            self.payload["models"] = self.params.pop("models")
 
     async def clean(self):
         self.source_image = None
