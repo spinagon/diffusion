@@ -131,7 +131,7 @@ class Job:
             "shared": True,
             "nsfw": True,
             "replacement_filter": True,
-            "trusted_only": False,
+            "trusted_workers": False,
         }
         self.state = "created"
         self.kind = "txt2img"

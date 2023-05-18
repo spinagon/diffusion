@@ -49,9 +49,11 @@ class Connection:
     def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
         job = Job(prompt, self.apikey, self.endpoint)
         job.set_image(img)
-        job.set_mask(mask)
+        if mask:
+            job.set_mask(mask)
         job.payload["source_processing"] = "inpainting"
-        job.payload["models"] = ["anything_v4_inpainting"]
+        #job.payload["models"] = ["anything_v4_inpainting"]
+        job.payload["models"] = ["Deliberate Inpainting"]
         h, w = dimension(img)
         job.params["height"] = h
         job.params["width"] = w
@@ -172,7 +174,7 @@ class Job:
             "shared": True,
             "nsfw": True,
             "replacement_filter": True,
-            "trusted_only": False,
+            "trusted_workers": False,
         }
         self.state = "created"
         self.kind = "txt2img"
