@@ -52,7 +52,7 @@ class Connection:
         if mask:
             job.set_mask(mask)
         job.payload["source_processing"] = "inpainting"
-        #job.payload["models"] = ["anything_v4_inpainting"]
+        # job.payload["models"] = ["anything_v4_inpainting"]
         job.payload["models"] = ["Deliberate Inpainting"]
         h, w = dimension(img)
         job.params["height"] = h
