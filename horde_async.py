@@ -180,6 +180,8 @@ class Job:
             self.params["width"] = round(self.params["width"] / 64) * 64
         if "ct" in self.params:
             self.params["control_type"] = self.params.pop("ct")
+        if "control_type" in self.params:
+            self.params["denoising_strength"] = 1
         if "model" in self.params:
             self.payload["models"] = [self.params.pop("model")]
         if "models" in self.params:
@@ -231,7 +233,7 @@ class Job:
     async def await_result(self):
         wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10, 6]
         waited = 0
-        for i in range(100):
+        for i in range(200):
             if self.state == "failed":
                 return
             index = min(i, len(wait_list) - 1)

@@ -217,6 +217,8 @@ class Job:
             self.params["height"] = round(self.params["height"] / 64) * 64
         if "width" in self.params:
             self.params["width"] = round(self.params["width"] / 64) * 64
+        if "control_type" in self.params:
+            self.params["denoising_strength"] = 1
 
     def clean(self):
         self.source_image = None
@@ -261,9 +263,9 @@ class Job:
     def await_result(self):
         wait_list = [7, 1, 1, 2, 2, 7, 10, 10] + [6] * 100
         waited = 0
-        for i in range(30):
-            time.sleep(wait_list[i])
-            waited += wait_list[i]
+        for t in wait_list:
+            time.sleep(t)
+            waited += t
             self.status()
             d = self.last_status
             d["waited"] = waited
