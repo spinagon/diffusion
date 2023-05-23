@@ -111,7 +111,12 @@ def save(result, path):
             img_url = gen.pop("img")
             data = requests.get(img_url).content
             seed = gen["seed"]
-            paths.append(path + "_" + seed + ".webp")
+            savepath = path + "_" + seed + ".webp"
+            j = 0
+            while Path(savepath).exists():
+                savepath = path + "_" + seed + "-" + str(j) + ".webp"
+                j += 1
+            paths.append(savepath)
             Path(paths[-1]).write_bytes(data + info)
         except Exception as e:
             print(repr(e))
