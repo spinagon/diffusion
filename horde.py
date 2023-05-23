@@ -6,6 +6,7 @@ import re
 import time
 from io import BytesIO
 from pathlib import Path
+import random
 
 import imageio
 import requests
@@ -90,7 +91,8 @@ class Connection:
 
 
 def prepare_path(prompt=""):
-    time.sleep(0.02)
+    t = random.uniform(0.02, 0.3)
+    time.sleep(t)
     path = (
         "./sd/"
         + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
