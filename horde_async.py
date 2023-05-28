@@ -34,11 +34,11 @@ class Connection:
         r = await requests.get(self.endpoint + "/find_user", headers=headers)
         return r.json()
 
-    def create_job(self):
+    def create_job(self, prompt):
         return Job(prompt, self.apikey, self.endpoint, agent=self.agent)
 
     async def txt2img(self, prompt, options=None, **kwargs):
-        job = self.create_job()
+        job = self.create_job(prompt)
         job.params.update(options or {})
         job.params.update(kwargs)
         # self.jobs.append(job)
@@ -47,7 +47,7 @@ class Connection:
         return result
 
     async def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
-        job = self.create_job()
+        job = self.create_job(prompt)
         await job.set_image(img)
         h, w = await dimension(img)
         job.params["height"] = h
@@ -61,7 +61,7 @@ class Connection:
         return result
 
     async def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
-        job = self.create_job()
+        job = self.create_job(prompt)
         await job.set_image(img)
         job.set_mask(mask)
         job.payload["source_processing"] = "inpainting"
