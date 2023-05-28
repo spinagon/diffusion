@@ -203,12 +203,16 @@ class Job:
             else:
                 strength = 1
             lora = lora[0]
+            if "inject" in self.params:
+                inject = self.params.pop("inject")
+            else:
+                inject = "any"
             self.params["loras"] = [
                 {
                     "name": lora,
                     "model": strength,
                     "clip": 1,
-                    "inject_trigger": "any",
+                    "inject_trigger": inject,
                 }
             ]
 
