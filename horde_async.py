@@ -213,7 +213,7 @@ class Job:
         self.payload["source_mask"] = None
 
     async def generate(self):
-        headers = {"apikey": self.apikey, "Client-Agent": agent}
+        headers = {"apikey": self.apikey, "Client-Agent": self.agent}
         for i in range(3):
             r = await requests.post(
                 self.endpoint + "/generate/async", json=self.payload, headers=headers
