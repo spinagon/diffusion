@@ -2,6 +2,7 @@
 import base64
 import datetime
 import pprint
+import random
 import re
 import time
 from io import BytesIO
@@ -49,9 +50,11 @@ class Connection:
     def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
         job = Job(prompt, self.apikey, self.endpoint)
         job.set_image(img)
-        job.set_mask(mask)
+        if mask:
+            job.set_mask(mask)
         job.payload["source_processing"] = "inpainting"
-        job.payload["models"] = ["anything_v4_inpainting"]
+        # job.payload["models"] = ["anything_v4_inpainting"]
+        job.payload["models"] = ["Deliberate Inpainting"]
         h, w = dimension(img)
         job.params["height"] = h
         job.params["width"] = w
@@ -88,7 +91,8 @@ class Connection:
 
 
 def prepare_path(prompt=""):
-    time.sleep(0.02)
+    t = random.uniform(0.02, 0.3)
+    time.sleep(t)
     path = (
         "./sd/"
         + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
@@ -107,7 +111,12 @@ def save(result, path):
             img_url = gen.pop("img")
             data = requests.get(img_url).content
             seed = gen["seed"]
-            paths.append(path + "_" + seed + ".webp")
+            savepath = path + "_" + seed + ".webp"
+            j = 0
+            while Path(savepath).exists():
+                savepath = path + "_" + seed + "-" + str(j) + ".webp"
+                j += 1
+            paths.append(savepath)
             Path(paths[-1]).write_bytes(data + info)
         except Exception as e:
             print(repr(e))
@@ -171,8 +180,8 @@ class Job:
             "models": ["Deliberate"],
             "shared": True,
             "nsfw": True,
-            "replacement_filter": False,
-            "trusted_only": False,
+            "replacement_filter": True,
+            "trusted_workers": False,
         }
         self.state = "created"
         self.kind = "txt2img"
@@ -209,6 +218,14 @@ class Job:
             self.params["seed"] = str(self.params["seed"])
         if "model" in self.params:
             self.payload["models"] = [self.params.pop("model")]
+        if "models" in self.params:
+            self.payload["models"] = self.params.pop("models")
+        if "height" in self.params:
+            self.params["height"] = round(self.params["height"] / 64) * 64
+        if "width" in self.params:
+            self.params["width"] = round(self.params["width"] / 64) * 64
+        if "control_type" in self.params:
+            self.params["denoising_strength"] = 1
 
     def clean(self):
         self.source_image = None
@@ -253,9 +270,9 @@ class Job:
     def await_result(self):
         wait_list = [7, 1, 1, 2, 2, 7, 10, 10] + [6] * 100
         waited = 0
-        for i in range(30):
-            time.sleep(wait_list[i])
-            waited += wait_list[i]
+        for t in wait_list:
+            time.sleep(t)
+            waited += t
             self.status()
             d = self.last_status
             d["waited"] = waited

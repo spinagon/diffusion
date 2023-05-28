@@ -14,7 +14,12 @@ from .aiohttp_backend import Http_backend
 
 
 class Connection:
-    def __init__(self, endpoint="https://stablehorde.net/api/v2", apikey=None, agent="unknown:0:unknown"):
+    def __init__(
+        self,
+        endpoint="https://stablehorde.net/api/v2",
+        apikey=None,
+        agent="unknown:0:unknown",
+    ):
         self.endpoint = endpoint
         self.apikey = apikey
         self.agent = agent
@@ -127,6 +132,7 @@ class Job:
         self.prompt = prompt
         self.apikey = apikey
         self.endpoint = endpoint
+        self.agent = agent
         self.params = {"sampler_name": "k_dpmpp_2m", "steps": 20, "karras": True}
         self.payload = {
             "prompt": self.prompt,
@@ -135,7 +141,7 @@ class Job:
             "shared": True,
             "nsfw": True,
             "replacement_filter": True,
-            "trusted_only": False,
+            "trusted_workers": False,
         }
         self.state = "created"
         self.kind = "txt2img"
@@ -184,6 +190,21 @@ class Job:
             self.params["width"] = round(self.params["width"] / 64) * 64
         if "ct" in self.params:
             self.params["control_type"] = self.params.pop("ct")
+        if "control_type" in self.params:
+            self.params["denoising_strength"] = 1
+        if "model" in self.params:
+            self.payload["models"] = [self.params.pop("model")]
+        if "models" in self.params:
+            self.payload["models"] = self.params.pop("models")
+        if "lora" in self.params:
+            self.params["loras"] = [
+                {
+                    "name": self.params.pop("lora"),
+                    "model": 1,
+                    "clip": 1,
+                    "inject_trigger": "any",
+                }
+            ]
 
     async def clean(self):
         self.source_image = None
@@ -192,7 +213,7 @@ class Job:
         self.payload["source_mask"] = None
 
     async def generate(self):
-        headers = {"apikey": self.apikey}
+        headers = {"apikey": self.apikey, "Client-Agent": agent}
         for i in range(3):
             r = await requests.post(
                 self.endpoint + "/generate/async", json=self.payload, headers=headers
@@ -231,7 +252,7 @@ class Job:
     async def await_result(self):
         wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10, 6]
         waited = 0
-        for i in range(100):
+        for i in range(200):
             if self.state == "failed":
                 return
             index = min(i, len(wait_list) - 1)
