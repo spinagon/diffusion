@@ -14,9 +14,10 @@ from .aiohttp_backend import Http_backend
 
 
 class Connection:
-    def __init__(self, endpoint="https://stablehorde.net/api/v2", apikey=None):
+    def __init__(self, endpoint="https://stablehorde.net/api/v2", apikey=None, agent="unknown:0:unknown"):
         self.endpoint = endpoint
         self.apikey = apikey
+        self.agent = agent
         self.jobs = []
 
     async def init(self):
@@ -28,8 +29,11 @@ class Connection:
         r = await requests.get(self.endpoint + "/find_user", headers=headers)
         return r.json()
 
+    def create_job(self):
+        return Job(prompt, self.apikey, self.endpoint, agent=self.agent)
+
     async def txt2img(self, prompt, options=None, **kwargs):
-        job = Job(prompt, self.apikey, self.endpoint)
+        job = self.create_job()
         job.params.update(options or {})
         job.params.update(kwargs)
         # self.jobs.append(job)
@@ -38,7 +42,7 @@ class Connection:
         return result
 
     async def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
-        job = Job(prompt, self.apikey, self.endpoint)
+        job = self.create_job()
         await job.set_image(img)
         h, w = await dimension(img)
         job.params["height"] = h
@@ -52,7 +56,7 @@ class Connection:
         return result
 
     async def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
-        job = Job(prompt, self.apikey, self.endpoint)
+        job = self.create_job()
         await job.set_image(img)
         job.set_mask(mask)
         job.payload["source_processing"] = "inpainting"
@@ -119,7 +123,7 @@ async def dimension(img):
 
 
 class Job:
-    def __init__(self, prompt, apikey, endpoint):
+    def __init__(self, prompt, apikey, endpoint, agent="unknown:0:unknown"):
         self.prompt = prompt
         self.apikey = apikey
         self.endpoint = endpoint
@@ -130,7 +134,7 @@ class Job:
             "models": ["Deliberate"],
             "shared": True,
             "nsfw": True,
-            "replacement_filter": False,
+            "replacement_filter": True,
             "trusted_only": False,
         }
         self.state = "created"
