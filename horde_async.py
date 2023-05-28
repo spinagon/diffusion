@@ -197,10 +197,16 @@ class Job:
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
         if "lora" in self.params:
+            lora = self.params.pop("lora").split(":")
+            if len(lora) > 1:
+                strength = float(lora[1])
+            else:
+                strength = 1
+            lora = lora[0]
             self.params["loras"] = [
                 {
-                    "name": self.params.pop("lora"),
-                    "model": 1,
+                    "name": lora,
+                    "model": strength,
                     "clip": 1,
                     "inject_trigger": "any",
                 }
