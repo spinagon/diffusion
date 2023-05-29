@@ -285,6 +285,8 @@ class Job:
                 self.result = d
                 self.result["waited"] = waited
                 self.result["payload"] = self.payload
+                self.result["payload"]["source_image"] = ""
+                self.result["payload"]["source_mask"] = ""
                 self.state = "done"
                 return
 
