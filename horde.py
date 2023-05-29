@@ -24,8 +24,9 @@ class Connection:
         r = requests.get(self.endpoint + "/find_user", headers=headers)
         return r.json()
 
-    def txt2img(self, prompt, options=None, **kwargs):
+    def txt2img(self, prompt, denoise=0.4, options=None, **kwargs):
         job = Job(prompt, self.apikey, self.endpoint)
+        job.params["denoising_strength"] = denoise
         job.params.update(options or {})
         job.params.update(kwargs)
         self.jobs.append(job)
@@ -283,6 +284,7 @@ class Job:
             ) == 0:
                 self.result = d
                 self.result["waited"] = waited
+                self.result["payload"] = self.payload
                 self.state = "done"
                 return
 
