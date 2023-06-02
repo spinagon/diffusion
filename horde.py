@@ -193,7 +193,7 @@ class Job:
             "nsfw": True,
             "replacement_filter": True,
             "trusted_workers": False,
-            #"workers": ["dc0704ab-5b42-4c65-8471-561be16ad696"]
+            # "workers": ["dc0704ab-5b42-4c65-8471-561be16ad696"]
         }
         self.state = "created"
         self.kind = "txt2img"
