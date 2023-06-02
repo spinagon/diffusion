@@ -181,6 +181,8 @@ class Job:
     async def validate_params(self):
         if "seed" in self.params:
             self.params["seed"] = str(self.params["seed"])
+        if "lora" in self.params:
+            self.params["lora"] = str(self.params["lora"])
         if "denoise" in self.params:
             self.params["denoising_strength"] = float(self.params["denoise"])
             self.params.pop("denoise")
