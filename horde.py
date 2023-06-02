@@ -14,14 +14,17 @@ from PIL import Image
 
 
 class Connection:
-    def __init__(self, endpoint="https://stablehorde.net/api/v2", apikey=None):
+    def __init__(self, endpoint="https://stablehorde.net/api/v2", 
+        apikey=None, 
+        agent="diff_lib:0.1:flak.yar@gmail.com",):
         self.endpoint = endpoint
         self.apikey = apikey
         self.jobs = []
+        self.agent = agent
+        self.headers = {"apikey": self.apikey, "Client-Agent": self.agent}
 
     def find_user(self):
-        headers = {"apikey": self.apikey}
-        r = requests.get(self.endpoint + "/find_user", headers=headers)
+        r = requests.get(self.endpoint + "/find_user", headers=self.headers)
         return r.json()
 
     def txt2img(self, prompt, denoise=0.4, options=None, **kwargs):
@@ -34,12 +37,13 @@ class Connection:
         job.clean()
         return result
 
-    def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
+    def img2img(self, prompt, img, options=None, denoise=0.55, autoresize=True, **kwargs):
         job = Job(prompt, self.apikey, self.endpoint)
         job.set_image(img)
-        h, w = dimension(img)
-        job.params["height"] = h
-        job.params["width"] = w
+        if autoresize:
+            h, w = dimension(img)
+            job.params["height"] = h
+            job.params["width"] = w
         job.params["denoising_strength"] = denoise
         job.params.update(options or {})
         job.params.update(kwargs)
@@ -69,7 +73,9 @@ class Connection:
 
     def interrogate(self, img, caption_type="caption"):
         """
-        caption_type="caption" | "interrogation" | "nsfw"
+        caption, interrogation, nsfw, GFPGAN, RealESRGAN_x4plus, 
+        RealESRGAN_x2plus, RealESRGAN_x4plus_anime_6B,
+        NMKD_Siax, 4x_AnimeSharp, CodeFormers, strip_background
         """
         job = Interrogation_job(img, self.apikey, self.endpoint, caption_type)
         self.jobs.append(job)
@@ -96,7 +102,7 @@ def prepare_path(prompt=""):
     time.sleep(t)
     path = (
         "./sd/"
-        + datetime.datetime.now().isoformat().split(".")[0].replace(":", ".")
+        + datetime.datetime.now().isoformat().replace(":", ".")
         + "_"
         + get_slug(prompt)
     )
@@ -235,10 +241,9 @@ class Job:
         self.payload["source_mask"] = None
 
     def generate(self):
-        headers = {"apikey": self.apikey}
         for i in range(3):
             r = requests.post(
-                self.endpoint + "/generate/async", json=self.payload, headers=headers
+                self.endpoint + "/generate/async", json=self.payload, headers=self.headers
             )
             if r.status_code != 403:
                 break
@@ -314,6 +319,7 @@ class Interrogation_job(Job):
         }
         self.state = "created"
         self.kind = "interrogate"
+        self.result = None
 
     def run(self):
         self.started_at = datetime.datetime.now()
@@ -323,10 +329,9 @@ class Interrogation_job(Job):
         return self.result
 
     def interrogate(self):
-        headers = {"apikey": self.apikey}
         for i in range(3):
             r = requests.post(
-                self.endpoint + "/interrogate/async", json=self.payload, headers=headers
+                self.endpoint + "/interrogate/async", json=self.payload, headers=self.headers
             )
             if r.status_code != 403:
                 break
