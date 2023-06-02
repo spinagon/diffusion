@@ -31,7 +31,7 @@ class Connection:
         return r.json()
 
     def txt2img(self, prompt, denoise=0.4, options=None, **kwargs):
-        job = Job(prompt, self.apikey, self.endpoint)
+        job = Job(prompt, self)
         job.params["denoising_strength"] = denoise
         job.params.update(options or {})
         job.params.update(kwargs)
@@ -43,7 +43,7 @@ class Connection:
     def img2img(
         self, prompt, img, options=None, denoise=0.55, autoresize=True, **kwargs
     ):
-        job = Job(prompt, self.apikey, self.endpoint)
+        job = Job(prompt, self)
         job.set_image(img)
         if autoresize:
             h, w = dimension(img)
@@ -58,7 +58,7 @@ class Connection:
         return result
 
     def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
-        job = Job(prompt, self.apikey, self.endpoint)
+        job = Job(prompt, self)
         job.set_image(img)
         if mask:
             job.set_mask(mask)
@@ -82,7 +82,7 @@ class Connection:
         RealESRGAN_x2plus, RealESRGAN_x4plus_anime_6B,
         NMKD_Siax, 4x_AnimeSharp, CodeFormers, strip_background
         """
-        job = Interrogation_job(img, self.apikey, self.endpoint, caption_type)
+        job = Interrogation_job(img, self, caption_type)
         self.jobs.append(job)
         result = job.run()
         return result
@@ -181,10 +181,9 @@ def dimension(img):
 
 
 class Job:
-    def __init__(self, prompt, apikey, endpoint):
+    def __init__(self, prompt, conn):
         self.prompt = prompt
-        self.apikey = apikey
-        self.endpoint = endpoint
+        self.conn = conn
         self.params = {"sampler_name": "k_dpmpp_2m", "steps": 20, "karras": True}
         self.payload = {
             "prompt": self.prompt,
@@ -194,6 +193,7 @@ class Job:
             "nsfw": True,
             "replacement_filter": True,
             "trusted_workers": False,
+            #"workers": ["dc0704ab-5b42-4c65-8471-561be16ad696"]
         }
         self.state = "created"
         self.kind = "txt2img"
@@ -238,6 +238,8 @@ class Job:
             self.params["width"] = round(self.params["width"] / 64) * 64
         if "control_type" in self.params:
             self.params["denoising_strength"] = 1
+        if "workers" in self.params:
+            self.payload["workers"] = self.params.pop("workers")
 
     def clean(self):
         self.source_image = None
@@ -248,9 +250,9 @@ class Job:
     def generate(self):
         for i in range(3):
             r = requests.post(
-                self.endpoint + "/generate/async",
+                self.conn.endpoint + "/generate/async",
                 json=self.payload,
-                headers=self.headers,
+                headers=self.conn.headers,
             )
             if r.status_code != 403:
                 break
@@ -267,9 +269,9 @@ class Job:
 
     def status(self):
         if self.kind == "interrogate":
-            r = requests.get(self.endpoint + "/interrogate/status/" + self.uuid)
+            r = requests.get(self.conn.endpoint + "/interrogate/status/" + self.uuid)
         else:
-            r = requests.get(self.endpoint + "/generate/status/" + self.uuid)
+            r = requests.get(self.conn.endpoint + "/generate/status/" + self.uuid)
         try:
             status = r.json()
             status["prompt"] = getattr(self, "prompt", "")
@@ -315,10 +317,9 @@ class Job:
 
 
 class Interrogation_job(Job):
-    def __init__(self, img, apikey, endpoint, caption_type="caption"):
+    def __init__(self, img, conn, caption_type="caption"):
         self.source_image = img
-        self.apikey = apikey
-        self.endpoint = endpoint
+        self.conn = conn
         self.caption_type = caption_type
         self.payload = {
             "source_image": pack_image(img),
@@ -338,9 +339,9 @@ class Interrogation_job(Job):
     def interrogate(self):
         for i in range(3):
             r = requests.post(
-                self.endpoint + "/interrogate/async",
+                self.conn.endpoint + "/interrogate/async",
                 json=self.payload,
-                headers=self.headers,
+                headers=self.conn.headers,
             )
             if r.status_code != 403:
                 break
