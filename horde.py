@@ -14,9 +14,12 @@ from PIL import Image
 
 
 class Connection:
-    def __init__(self, endpoint="https://stablehorde.net/api/v2", 
-        apikey=None, 
-        agent="diff_lib:0.1:flak.yar@gmail.com",):
+    def __init__(
+        self,
+        endpoint="https://stablehorde.net/api/v2",
+        apikey=None,
+        agent="diff_lib:0.1:flak.yar@gmail.com",
+    ):
         self.endpoint = endpoint
         self.apikey = apikey
         self.jobs = []
@@ -37,7 +40,9 @@ class Connection:
         job.clean()
         return result
 
-    def img2img(self, prompt, img, options=None, denoise=0.55, autoresize=True, **kwargs):
+    def img2img(
+        self, prompt, img, options=None, denoise=0.55, autoresize=True, **kwargs
+    ):
         job = Job(prompt, self.apikey, self.endpoint)
         job.set_image(img)
         if autoresize:
@@ -73,7 +78,7 @@ class Connection:
 
     def interrogate(self, img, caption_type="caption"):
         """
-        caption, interrogation, nsfw, GFPGAN, RealESRGAN_x4plus, 
+        caption, interrogation, nsfw, GFPGAN, RealESRGAN_x4plus,
         RealESRGAN_x2plus, RealESRGAN_x4plus_anime_6B,
         NMKD_Siax, 4x_AnimeSharp, CodeFormers, strip_background
         """
@@ -243,7 +248,9 @@ class Job:
     def generate(self):
         for i in range(3):
             r = requests.post(
-                self.endpoint + "/generate/async", json=self.payload, headers=self.headers
+                self.endpoint + "/generate/async",
+                json=self.payload,
+                headers=self.headers,
             )
             if r.status_code != 403:
                 break
@@ -331,7 +338,9 @@ class Interrogation_job(Job):
     def interrogate(self):
         for i in range(3):
             r = requests.post(
-                self.endpoint + "/interrogate/async", json=self.payload, headers=self.headers
+                self.endpoint + "/interrogate/async",
+                json=self.payload,
+                headers=self.headers,
             )
             if r.status_code != 403:
                 break
