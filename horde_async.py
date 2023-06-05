@@ -5,6 +5,7 @@ import re
 import time
 from io import BytesIO
 from pathlib import Path
+import pprint
 
 import imageio
 import numpy as np
