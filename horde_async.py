@@ -43,8 +43,9 @@ class Connection:
         job.params.update(kwargs)
         # self.jobs.append(job)
         result = await job.run()
+        info = job.get_info()
         await job.clean()
-        return result
+        return result, info
 
     async def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
         job = self.create_job(prompt)
@@ -57,8 +58,9 @@ class Connection:
         job.params.update(kwargs)
         # self.jobs.append(job)
         result = await job.run()
+        info = job.get_info()
         await job.clean()
-        return result
+        return result, info
 
     async def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
         job = self.create_job(prompt)
@@ -299,6 +301,14 @@ class Job:
     def __repr__(self):
         self.check_state()
         return "Job {}, state: {}".format(id(self), self.state)
+
+    def get_info(self):
+        payload = {}
+        payload.update(self.payload)
+        payload["source_image"] = None
+        payload["source_mask"] = None
+        info = pprint.pformat([self.result, payload])
+        return info
 
 
 class Interrogation_job(Job):
