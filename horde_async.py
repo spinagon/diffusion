@@ -38,7 +38,7 @@ class Connection:
         return r.json()
 
     def create_job(self, prompt):
-        return Job(prompt, self.apikey, self.endpoint, agent=self.agent)
+        return Job(prompt, self.apikey, self.endpoint, conn=self, agent=self.agent)
 
     async def txt2img(self, prompt, options=None, **kwargs):
         job = self.create_job(prompt)
@@ -149,7 +149,7 @@ async def dimension(img):
 
 
 class Job:
-    def __init__(self, prompt, apikey, endpoint, agent="unknown:0:unknown"):
+    def __init__(self, prompt, apikey, endpoint, conn, agent="unknown:0:unknown"):
         self.prompt = prompt
         self.apikey = apikey
         self.endpoint = endpoint
@@ -169,6 +169,7 @@ class Job:
         self.source_image = None
         self.source_mask = None
         self.result = None
+        self.conn = conn
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
@@ -216,7 +217,7 @@ class Job:
         if "control_type" in self.params:
             self.params["denoising_strength"] = 1
         if "model" in self.params:
-            self.payload["models"] = [self.params.pop("model")]
+            self.payload["models"] = [self.conn.match_model(self.params.pop("model"))]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
         if "lora" in self.params:
