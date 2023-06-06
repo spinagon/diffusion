@@ -216,7 +216,7 @@ class Job:
         if "control_type" in self.params:
             self.params["denoising_strength"] = 1
         if "model" in self.params:
-            self.payload["models"] = [self.conn.match_model(self.params.pop("model"))]
+            self.payload["models"] = [await self.conn.match_model(self.params.pop("model"))]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
         if "lora" in self.params:
