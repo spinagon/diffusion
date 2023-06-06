@@ -395,6 +395,9 @@ class Webp:
         self.read_data()
         return imageio.imread(self.data)
 
+
 def find_closest(name, variants, n=1):
-    lower = difflib.get_close_matches(name.lower(), [x.lower() for x in variants], n=n, cutoff=0)
+    lower = difflib.get_close_matches(
+        name.lower(), [x.lower() for x in variants], n=n, cutoff=0
+    )
     return [variants[[x.lower() for x in variants].index(y)] for y in lower]

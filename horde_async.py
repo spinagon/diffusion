@@ -105,7 +105,6 @@ class Connection:
         return result
 
 
-
 def pack_image(img, format=None):
     if isinstance(img, str) or isinstance(img, Path):
         image = Path(img).read_bytes()
@@ -372,5 +371,7 @@ class Interrogation_job(Job):
 
 
 def find_closest(name, variants, n=1):
-    lower = difflib.get_close_matches(name.lower(), [x.lower() for x in variants], n=n, cutoff=0)
+    lower = difflib.get_close_matches(
+        name.lower(), [x.lower() for x in variants], n=n, cutoff=0
+    )
     return [variants[[x.lower() for x in variants].index(y)] for y in lower]
