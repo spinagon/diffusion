@@ -7,6 +7,7 @@ import re
 import time
 from io import BytesIO
 from pathlib import Path
+import difflib
 
 import imageio
 import requests
@@ -25,6 +26,7 @@ class Connection:
         self.jobs = []
         self.agent = agent
         self.headers = {"apikey": self.apikey, "Client-Agent": self.agent}
+        self.model_names = []
 
     def find_user(self):
         r = requests.get(self.endpoint + "/find_user", headers=self.headers)
@@ -90,6 +92,7 @@ class Connection:
     def models(self):
         result = requests.get("https://stablehorde.net/api/v2/status/models").json()
         result = sorted(result, key=lambda x: -x["count"])
+        self.model_names = [x["name"] for x in result]
         return result
 
     def model_stats(self):
@@ -100,6 +103,15 @@ class Connection:
     def heartbeat(self):
         result = requests.get("https://stablehorde.net/api/v2/status/heartbeat").json()
         return result
+
+    def match_model(self, name, n=1):
+        if len(self.model_names) == 0:
+            self.models()
+        matches = find_closest(name, self.model_names, n)
+        if n == 1:
+            return matches[0]
+        else:
+            return matches
 
 
 def prepare_path(prompt=""):
@@ -229,7 +241,7 @@ class Job:
         if "seed" in self.params:
             self.params["seed"] = str(self.params["seed"])
         if "model" in self.params:
-            self.payload["models"] = [self.params.pop("model")]
+            self.payload["models"] = [self.conn.match_model(self.params.pop("model"))]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
         if "height" in self.params:
@@ -382,3 +394,7 @@ class Webp:
     def to_array(self):
         self.read_data()
         return imageio.imread(self.data)
+
+def find_closest(name, variants, n=1):
+    lower = difflib.get_close_matches(name.lower(), [x.lower() for x in variants], n=n, cutoff=0)
+    return [variants[[x.lower() for x in variants].index(y)] for y in lower]

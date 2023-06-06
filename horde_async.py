@@ -6,6 +6,7 @@ import time
 from io import BytesIO
 from pathlib import Path
 import pprint
+import difflib
 
 import imageio
 import numpy as np
@@ -25,6 +26,7 @@ class Connection:
         self.apikey = apikey
         self.agent = agent
         self.jobs = []
+        self.model_names = []
 
     async def init(self):
         global requests
@@ -86,6 +88,22 @@ class Connection:
         job = Interrogation_job(img, self.apikey, self.endpoint, caption_type)
         result = await job.run()
         return result
+
+    async def match_model(self, name, n=1):
+        if len(self.model_names) == 0:
+            await self.models()
+        matches = find_closest(name, self.model_names, n)
+        if n == 1:
+            return matches[0]
+        else:
+            return matches
+
+    async def models(self):
+        result = await requests.get(f"{self.endpoint}/status/models").json()
+        result = sorted(result, key=lambda x: -x["count"])
+        self.model_names = [x["name"] for x in result]
+        return result
+
 
 
 def pack_image(img, format=None):
@@ -350,3 +368,8 @@ class Interrogation_job(Job):
             raise e
         self.uuid = uuid
         self.state = "running"
+
+
+def find_closest(name, variants, n=1):
+    lower = difflib.get_close_matches(name.lower(), [x.lower() for x in variants], n=n, cutoff=0)
+    return [variants[[x.lower() for x in variants].index(y)] for y in lower]
