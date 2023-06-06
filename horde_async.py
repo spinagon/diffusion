@@ -99,7 +99,7 @@ class Connection:
             return matches
 
     async def models(self):
-        result = await requests.get(f"{self.endpoint}/status/models").json()
+        result = (await requests.get(f"{self.endpoint}/status/models")).json()
         result = sorted(result, key=lambda x: -x["count"])
         self.model_names = [x["name"] for x in result]
         return result
