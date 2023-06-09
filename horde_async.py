@@ -354,7 +354,7 @@ class Interrogation_job(Job):
         for i in range(3):
             r = await requests.post(
                 self.conn.endpoint + "/interrogate/async", json=self.payload, headers=self.headers
-            )
+)
             if r.status_code != 403:
                 break
             else:
