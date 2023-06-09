@@ -332,10 +332,11 @@ class Interrogation_job(Job):
     def __init__(self, img, conn, caption_type="caption"):
         self.source_image = img
         self.conn = conn
-        self.caption_type = caption_type
+        if hasattr(caption_type, "lower"):
+            caption_type = [caption_type]
         self.payload = {
             "source_image": pack_image(img),
-            "forms": [{"name": caption_type}],
+            "forms": [{"name": x} for x in caption_type],
         }
         self.state = "created"
         self.kind = "interrogate"
