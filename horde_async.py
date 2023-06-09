@@ -38,7 +38,7 @@ class Connection:
         return r.json()
 
     def create_job(self, prompt):
-        return Job(prompt, self.apikey, self.endpoint, conn=self, agent=self.agent)
+        return Job(prompt, conn=self)
 
     async def txt2img(self, prompt, options=None, **kwargs):
         job = self.create_job(prompt)
@@ -85,7 +85,7 @@ class Connection:
         """
         caption_type="caption" | "interrogation" | "nsfw"
         """
-        job = Interrogation_job(img, self.apikey, self.endpoint, caption_type)
+        job = Interrogation_job(img, conn=self, caption_type)
         result = await job.run()
         return result
 
@@ -148,11 +148,8 @@ async def dimension(img):
 
 
 class Job:
-    def __init__(self, prompt, apikey, endpoint, conn, agent="unknown:0:unknown"):
+    def __init__(self, prompt, conn):
         self.prompt = prompt
-        self.apikey = apikey
-        self.endpoint = endpoint
-        self.agent = agent
         self.params = {"sampler_name": "k_dpmpp_2m", "steps": 20, "karras": True}
         self.payload = {
             "prompt": self.prompt,
@@ -169,6 +166,7 @@ class Job:
         self.source_mask = None
         self.result = None
         self.conn = conn
+        self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
@@ -248,10 +246,9 @@ class Job:
         self.payload["source_mask"] = None
 
     async def generate(self):
-        headers = {"apikey": self.apikey, "Client-Agent": self.agent}
         for i in range(3):
             r = await requests.post(
-                self.endpoint + "/generate/async", json=self.payload, headers=headers
+                self.endpoint + "/generate/async", json=self.payload, headers=self.headers
             )
             if r.status_code != 403:
                 break
@@ -270,9 +267,9 @@ class Job:
 
     async def status(self):
         if self.kind == "interrogate":
-            r = await requests.get(self.endpoint + "/interrogate/status/" + self.uuid)
+            r = await requests.get(self.endpoint + "/interrogate/status/" + self.uuid, headers=self.headers)
         else:
-            r = await requests.get(self.endpoint + "/generate/status/" + self.uuid)
+            r = await requests.get(self.endpoint + "/generate/status/" + self.uuid, headers=self.headers)
         try:
             status = r.json()
             if "prompt" in status:
@@ -334,10 +331,10 @@ class Job:
 
 
 class Interrogation_job(Job):
-    def __init__(self, img, apikey, endpoint, caption_type="caption"):
+    def __init__(self, img, conn, caption_type="caption"):
         self.source_image = img
-        self.apikey = apikey
-        self.endpoint = endpoint
+        self.conn = conn
+        self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
         self.caption_type = caption_type
         self.payload = {
             "source_image": pack_image(img),
@@ -354,10 +351,9 @@ class Interrogation_job(Job):
         return self.result
 
     async def interrogate(self):
-        headers = {"apikey": self.apikey}
         for i in range(3):
             r = await requests.post(
-                self.endpoint + "/interrogate/async", json=self.payload, headers=headers
+                self.endpoint + "/interrogate/async", json=self.payload, headers=self.headers
             )
             if r.status_code != 403:
                 break
