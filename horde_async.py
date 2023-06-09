@@ -85,7 +85,7 @@ class Connection:
         """
         caption_type="caption" | "interrogation" | "nsfw"
         """
-        job = Interrogation_job(img, conn=self, caption_type)
+        job = Interrogation_job(img, conn=self, caption_type=caption_type)
         result = await job.run()
         return result
 
