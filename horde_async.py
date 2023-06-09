@@ -248,7 +248,7 @@ class Job:
     async def generate(self):
         for i in range(3):
             r = await requests.post(
-                self.endpoint + "/generate/async", json=self.payload, headers=self.headers
+                self.conn.endpoint + "/generate/async", json=self.payload, headers=self.headers
             )
             if r.status_code != 403:
                 break
@@ -267,9 +267,9 @@ class Job:
 
     async def status(self):
         if self.kind == "interrogate":
-            r = await requests.get(self.endpoint + "/interrogate/status/" + self.uuid, headers=self.headers)
+            r = await requests.get(self.conn.endpoint + "/interrogate/status/" + self.uuid, headers=self.headers)
         else:
-            r = await requests.get(self.endpoint + "/generate/status/" + self.uuid, headers=self.headers)
+            r = await requests.get(self.conn.endpoint + "/generate/status/" + self.uuid, headers=self.headers)
         try:
             status = r.json()
             if "prompt" in status:
@@ -353,7 +353,7 @@ class Interrogation_job(Job):
     async def interrogate(self):
         for i in range(3):
             r = await requests.post(
-                self.endpoint + "/interrogate/async", json=self.payload, headers=self.headers
+                self.conn.endpoint + "/interrogate/async", json=self.payload, headers=self.headers
             )
             if r.status_code != 403:
                 break
