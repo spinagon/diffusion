@@ -78,8 +78,9 @@ class Connection:
         job.params.update(kwargs)
         # self.jobs.append(job)
         result = await job.run()
+        info = job.get_info()
         await job.clean()
-        return result
+        return result, info
 
     async def interrogate(self, img, caption_type="caption"):
         """
@@ -334,7 +335,7 @@ class Job:
         payload.update(self.payload)
         payload["source_image"] = None
         payload["source_mask"] = None
-        info = pprint.pformat([self.result, payload])
+        info = [self.result, payload]
         return info
 
 
