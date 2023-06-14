@@ -400,7 +400,5 @@ class Webp:
 def find_closest(name, variants, n=1):
     return [
         x[0]
-        for x in process.extract(
-            name.lower(), variants, processor=lambda x: x.lower(), limit=n
-        )
+        for x in process.extract(name.lower(), variants, processor=lambda x: x.lower(), limit=n)
     ]
