@@ -398,4 +398,9 @@ class Webp:
 
 
 def find_closest(name, variants, n=1):
-    return [x[0] for x in thefuzz.process.extract(name, variants, processor=lambda x: x.lower(), limit=n)]
+    return [
+        x[0]
+        for x in thefuzz.process.extract(
+            name, variants, processor=lambda x: x.lower(), limit=n
+        )
+    ]
