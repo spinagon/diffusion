@@ -325,7 +325,7 @@ class Job:
 
     def __repr__(self):
         self.check_state()
-        return "Job {}, state: {}".format(id(self), self.state)
+        return "<Job {}, {}, state: {}>".format(id(self), self.payload["prompt"][:40], self.state)
 
 
 class Interrogation_job(Job):
