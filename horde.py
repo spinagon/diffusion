@@ -7,7 +7,7 @@ import re
 import time
 from io import BytesIO
 from pathlib import Path
-import difflib
+import thefuzz
 
 import imageio
 import requests
@@ -398,7 +398,4 @@ class Webp:
 
 
 def find_closest(name, variants, n=1):
-    lower = difflib.get_close_matches(
-        name.lower(), [x.lower() for x in variants], n=n, cutoff=0
-    )
-    return [variants[[x.lower() for x in variants].index(y)] for y in lower]
+    return [x[0] for x in thefuzz.process.extract(name, variants, processor=lambda x: x.lower(), limit=n)]
