@@ -326,7 +326,7 @@ class Job:
     def __repr__(self):
         self.check_state()
         return "<Job {}, {}, state: {}>".format(
-            id(self), self.payload["prompt"][:40], self.state
+            id(self), self.payload.get("prompt", "")[:40], self.state
         )
 
 
