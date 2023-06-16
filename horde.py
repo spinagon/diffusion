@@ -8,6 +8,7 @@ import time
 from io import BytesIO
 from pathlib import Path
 from thefuzz import process
+import json
 
 import imageio
 import requests
@@ -130,7 +131,7 @@ def prepare_path(prompt=""):
 def save(result, path):
     paths = []
     for i, gen in enumerate(result["generations"]):
-        info = pprint.pformat(result).encode()
+        info = pprint.pformat(json.dumps(result)).encode()
         try:
             img_url = gen.pop("img")
             data = requests.get(img_url).content
