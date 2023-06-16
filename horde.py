@@ -131,7 +131,7 @@ def prepare_path(prompt=""):
 def save(result, path):
     paths = []
     for i, gen in enumerate(result["generations"]):
-        info = pprint.pformat(json.dumps(result)).encode()
+        info = b"\n" + json.dumps(result, indent=2).encode()
         try:
             img_url = gen.pop("img")
             data = requests.get(img_url).content
@@ -296,7 +296,7 @@ class Job:
             print(r.text)
 
     def await_result(self):
-        wait_list = [7, 1, 1, 2, 2, 7, 10, 10] + [6] * 100
+        wait_list = [6] + np.diff(np.logspace(np.log10(6), np.log10(60), num=10)).round().astype(int).tolist() + [6] * 100
         waited = 0
         for t in wait_list:
             time.sleep(t)
