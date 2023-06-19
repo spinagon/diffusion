@@ -250,7 +250,9 @@ class Job:
         if "width" in self.params:
             self.params["width"] = round(self.params["width"] / 64) * 64
         if "control_type" in self.params:
-            self.params["denoising_strength"] = 1
+            pass
+            #self.params["denoising_strength"] = 1
+            #self.params["sampler_name"] = "k_dpmpp_2m"
         if "workers" in self.params:
             self.payload["workers"] = self.params.pop("workers")
 
