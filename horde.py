@@ -218,7 +218,8 @@ class Job:
     def set_image(self, image):
         self.source_image = pack_image(image)
         self.payload["source_image"] = self.source_image
-        self.params["sampler_name"] = "k_euler_a"
+        self.params["sampler_name"] = "k_dpmpp_sde"
+        self.params["steps"] = 15
         if self.source_mask is None:
             self.kind = "img2img"
 
@@ -278,6 +279,7 @@ class Job:
         except Exception as e:
             self.state = "failed"
             self.result = (r, r.text)
+            print(self.result)
             raise e
         self.uuid = uuid
         self.state = "running"
