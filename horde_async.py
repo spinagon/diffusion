@@ -53,7 +53,7 @@ class Connection:
     async def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
         job = self.create_job(prompt)
         await job.set_image(img)
-        h, w = await dimension(img)
+        h, w = await dimension(img, best_size=job.best_size)
         job.params["height"] = h
         job.params["width"] = w
         job.params["denoising_strength"] = denoise
@@ -70,7 +70,7 @@ class Connection:
         await job.set_image(img)
         job.set_mask(mask)
         job.payload["source_processing"] = "inpainting"
-        h, w = await dimension(img)
+        h, w = await dimension(img, best_size=job.best_size)
         job.params["height"] = h
         job.params["width"] = w
         job.params["denoising_strength"] = denoise
@@ -126,7 +126,7 @@ def pack_image(img, format=None):
     return base64.encodebytes(image).decode()
 
 
-async def dimension(img):
+async def dimension(img, best_size=512):
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
     if isinstance(img, str) or isinstance(img, Path):
@@ -137,8 +137,8 @@ async def dimension(img):
         w, h = Image.open(img).size
     shorter = min(h, w)
     longer = max(h, w)
-    longer = int(round(longer / shorter * 512 / 64) * 64)
-    shorter = 512
+    longer = int(round(longer / shorter * best_size / 64) * 64)
+    shorter = best_size
     if w < h:
         width = shorter
         height = longer
@@ -168,6 +168,8 @@ class Job:
         self.result = None
         self.conn = conn
         self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
+        self.best_size = 512
+        self.validate_params()
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
@@ -225,6 +227,7 @@ class Job:
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
             self.params["n"] = self.params.get("n", 2)
+            self.best_size = 1024
         if "lora" in self.params:
             lora = self.params.pop("lora").split(":")
             if len(lora) > 1:
