@@ -221,6 +221,10 @@ class Job:
             ]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
+        if len(["SDXL" in x for x in self.payload.get("models", [])]) > 0:
+            self.params["width"] = self.params.get("width", 1024)
+            self.params["height"] = self.params.get("height", 1024)
+            self.params["n"] = self.params.get("n", 2)
         if "lora" in self.params:
             lora = self.params.pop("lora").split(":")
             if len(lora) > 1:
@@ -236,7 +240,7 @@ class Job:
                 {
                     "name": lora,
                     "model": strength,
-                    "clip": 1,
+                    "clip": strength,
                     "inject_trigger": inject,
                 }
             ]

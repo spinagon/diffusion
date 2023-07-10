@@ -48,10 +48,15 @@ class Connection:
     ):
         job = Job(prompt, self)
         job.set_image(img)
-        if autoresize:
-            h, w = dimension(img)
-            job.params["height"] = h
-            job.params["width"] = w
+        if "width" not in kwargs and "height" not in kwargs:
+            if autoresize:
+                h, w = dimension(img)
+                job.params["height"] = h
+                job.params["width"] = w
+            else:
+                h, w = dimension(img, resize=False)
+                job.params["height"] = h
+                job.params["width"] = w
         job.params["denoising_strength"] = denoise
         job.params.update(options or {})
         job.params.update(kwargs)
@@ -136,11 +141,11 @@ def save(result, path):
             img_url = gen.pop("img")
             data = requests.get(img_url).content
             seed = gen["seed"]
-            savepath = path + "_" + seed + ".webp"
             j = 0
+            savepath = path + "_" + seed + "-" + str(j) + ".webp"
             while Path(savepath).exists():
-                savepath = path + "_" + seed + "-" + str(j) + ".webp"
                 j += 1
+                savepath = path + "_" + seed + "-" + str(j) + ".webp"
             paths.append(savepath)
             Path(paths[-1]).write_bytes(data + info)
         except Exception as e:
@@ -164,6 +169,12 @@ def pack_image(img, format=None):
             format = "png"
         imageio.imwrite(data, img_8, format=format)
         image = data.getvalue()
+    if isinstance(img, Image.Image):
+        data = BytesIO()
+        if format is None:
+            format = "JPEG"
+        img.save(data, format=format)
+        image = data.getvalue()
     return base64.encodebytes(image).decode()
 
 
@@ -171,25 +182,31 @@ def get_slug(prompt):
     return "_".join(re.findall("[a-zA-Z#0-9]+", prompt))[:40]
 
 
-def dimension(img):
+def dimension(img, resize=True):
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
+    if isinstance(img, Image.Image):
+        w, h = img.size
     if isinstance(img, str) or isinstance(img, Path):
         img = Path(img)
         if img.suffix == ".webp":
             w, h = Webp(img).to_image().size
         else:
             w, h = Image.open(img).size
-    shorter = min(h, w)
-    longer = max(h, w)
-    longer = int(round(longer / shorter * 512 / 64) * 64)
-    shorter = 512
-    if w < h:
-        width = shorter
-        height = longer
+    if resize:
+        shorter = min(h, w)
+        longer = max(h, w)
+        longer = int(round(longer / shorter * 512 / 64) * 64)
+        shorter = 512
+        if w < h:
+            width = shorter
+            height = longer
+        else:
+            width = longer
+            height = shorter
     else:
-        width = longer
-        height = shorter
+        height = h
+        width = w
     return height, width
 
 
@@ -246,14 +263,14 @@ class Job:
             self.payload["models"] = [self.conn.match_model(self.params.pop("model"))]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
+        if len(["SDXL" in x for x in self.payload.get("models", [])]) > 0:
+            self.params["width"] = self.params.get("width", 1024)
+            self.params["height"] = self.params.get("height", 1024)
+            self.params["n"] = self.params.get("n", 2)
         if "height" in self.params:
             self.params["height"] = round(self.params["height"] / 64) * 64
         if "width" in self.params:
             self.params["width"] = round(self.params["width"] / 64) * 64
-        if "control_type" in self.params:
-            pass
-            # self.params["denoising_strength"] = 1
-            # self.params["sampler_name"] = "k_dpmpp_2m"
         if "workers" in self.params:
             self.payload["workers"] = self.params.pop("workers")
 
