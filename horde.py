@@ -194,7 +194,7 @@ def pack_image(img, format=None):
 
 
 def get_slug(prompt):
-    return "_".join(re.findall("[a-zA-Z#0-9]+", prompt))[:40]
+    return "_".join(re.findall("[a-zA-Z#0-9]+", prompt))[:35]
 
 
 def dimension(img, resize=True, best_size=512):
@@ -278,6 +278,7 @@ class Job:
         return self.path
 
     def validate_params(self):
+        self.payload["prompt"] = self.payload.get("prompt", "").replace("\r", "")
         if "seed" in self.params:
             self.params["seed"] = str(self.params["seed"])
         if "model" in self.params:
@@ -377,7 +378,7 @@ class Job:
     def __repr__(self):
         self.check_state()
         return "<Job {}, {}, state: {}>".format(
-            id(self), self.payload.get("prompt", "")[:40], self.state
+            id(self), repr(self.payload.get("prompt", "")[:40]), self.state
         )
 
 
