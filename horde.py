@@ -50,11 +50,11 @@ class Connection:
         job.set_image(img)
         if "width" not in kwargs and "height" not in kwargs:
             if autoresize:
-                h, w = dimension(img)
+                h, w = dimension(img, best_size=job.best_size)
                 job.params["height"] = h
                 job.params["width"] = w
             else:
-                h, w = dimension(img, resize=False)
+                h, w = dimension(img, resize=False, best_size=job.best_size)
                 job.params["height"] = h
                 job.params["width"] = w
         job.params["denoising_strength"] = denoise
@@ -73,7 +73,7 @@ class Connection:
         job.payload["source_processing"] = "inpainting"
         # job.payload["models"] = ["anything_v4_inpainting"]
         job.payload["models"] = ["Deliberate Inpainting"]
-        h, w = dimension(img)
+        h, w = dimension(img, best_size=job.best_size)
         job.params["height"] = h
         job.params["width"] = w
         job.params["denoising_strength"] = denoise
@@ -182,7 +182,7 @@ def get_slug(prompt):
     return "_".join(re.findall("[a-zA-Z#0-9]+", prompt))[:40]
 
 
-def dimension(img, resize=True):
+def dimension(img, resize=True, best_size=512):
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
     if isinstance(img, Image.Image):
@@ -196,8 +196,8 @@ def dimension(img, resize=True):
     if resize:
         shorter = min(h, w)
         longer = max(h, w)
-        longer = int(round(longer / shorter * 512 / 64) * 64)
-        shorter = 512
+        longer = int(round(longer / shorter * best_size / 64) * 64)
+        shorter = best_size
         if w < h:
             width = shorter
             height = longer
@@ -231,6 +231,8 @@ class Job:
         self.source_mask = None
         self.result = None
         self.path = prepare_path(self.prompt)
+        self.best_size = 512
+        self.validate_params()
 
     def set_image(self, image):
         self.source_image = pack_image(image)
@@ -267,6 +269,7 @@ class Job:
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
             self.params["n"] = self.params.get("n", 2)
+            self.best_size = 1024
         if "height" in self.params:
             self.params["height"] = round(self.params["height"] / 64) * 64
         if "width" in self.params:
