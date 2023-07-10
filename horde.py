@@ -119,6 +119,21 @@ class Connection:
         else:
             return matches
 
+    def rate(self, uuid, id):
+        payload = {"best": str(id)}
+        r = requests.post(
+                self.endpoint + "/generate/rate/" + str(uuid),
+                json=payload,
+                headers=self.headers,
+            )
+        if r.ok:
+            return
+        else:
+            return r
+
+    def rate_last(self, index):
+        self.jobs[-1].rate(index)
+
 
 def prepare_path(prompt=""):
     t = random.uniform(0.02, 0.3)
@@ -242,6 +257,10 @@ class Job:
         if self.source_mask is None:
             self.kind = "img2img"
 
+    def rate(self, index):
+        id = self.result["generations"][index]["id"]
+        return self.conn.rate(self.uuid, id)
+
     def set_mask(self, mask):
         self.source_mask = pack_image(mask)
         self.payload["source_mask"] = self.source_mask
@@ -265,7 +284,7 @@ class Job:
             self.payload["models"] = [self.conn.match_model(self.params.pop("model"))]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
-        if len(["SDXL" in x for x in self.payload.get("models", [])]) > 0:
+        if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
             self.params["n"] = self.params.get("n", 2)
