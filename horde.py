@@ -122,10 +122,10 @@ class Connection:
     def rate(self, uuid, id):
         payload = {"best": str(id)}
         r = requests.post(
-                self.endpoint + "/generate/rate/" + str(uuid),
-                json=payload,
-                headers=self.headers,
-            )
+            self.endpoint + "/generate/rate/" + str(uuid),
+            json=payload,
+            headers=self.headers,
+        )
         if r.ok:
             return
         else:
