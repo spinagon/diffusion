@@ -101,9 +101,15 @@ class Connection:
         self.model_names = [x["name"] for x in result]
         return result
 
-    def model_stats(self):
+    def model_stats(self, period="month"):
         result = requests.get("https://stablehorde.net/api/v2/stats/img/models").json()
-        result = sorted(result["month"].items(), key=lambda x: -x[1])
+        if period is None:
+            ret = []
+            for k, v in result.items():
+                ret.append(sorted(v.items(), key=lambda x: -x[1]))
+            result = ret
+        else:
+            result = sorted(result[period].items(), key=lambda x: -x[1])
         return result
 
     def heartbeat(self):
@@ -133,6 +139,10 @@ class Connection:
 
     def rate_last(self, index):
         self.jobs[-1].rate(index)
+
+    def upscale(self, img, method="RealESRGAN_x4plus", autoresize=False):
+        """GFPGAN, RealESRGAN_x4plus, RealESRGAN_x2plus, RealESRGAN_x4plus_anime_6B, NMKD_Siax, 4x_AnimeSharp, CodeFormers, strip_background"""
+        return self.img2img(str(img), img, post_processing=[method], denoise=0.01, steps=1, autoresize=autoresize, sampler_name="k_euler")
 
 
 def prepare_path(prompt=""):
@@ -399,7 +409,12 @@ class Interrogation_job(Job):
     def run(self):
         self.started_at = datetime.datetime.now()
         self.interrogate()
-        self.await_result()
+        try:
+            self.await_result()
+        except Exception as e:
+            self.state = "failed"
+            self.exception = e
+            raise e
         self.finished_at = datetime.datetime.now()
         return self.result
 
