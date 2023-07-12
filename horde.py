@@ -242,10 +242,12 @@ def dimension(img, resize=True, best_size=512):
         width = w
     return height, width
 
+
 def size_from_ratio(ratio, pixels):
     h = np.sqrt(pixels / ratio)
     w = pixels / h
     return w, h
+
 
 class Job:
     def __init__(self, prompt, conn):
@@ -318,7 +320,9 @@ class Job:
             self.params["n"] = self.params.get("n", 2)
             self.best_size = 1024
         if "ratio" in self.params:
-            self.params["width"], self.params["height"] = size_from_ratio(self.params["ratio"], self.best_size ** 2)
+            self.params["width"], self.params["height"] = size_from_ratio(
+                self.params["ratio"], self.best_size**2
+            )
             self.params.pop("ratio")
         if "height" in self.params:
             self.params["height"] = int(round(self.params["height"] / 64) * 64)
