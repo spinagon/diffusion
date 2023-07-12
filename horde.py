@@ -242,6 +242,10 @@ def dimension(img, resize=True, best_size=512):
         width = w
     return height, width
 
+def size_from_ratio(ratio, pixels):
+    h = np.sqrt(pixels / ratio)
+    w = pixels / h
+    return w, h
 
 class Job:
     def __init__(self, prompt, conn):
@@ -287,12 +291,17 @@ class Job:
         self.payload["source_processing"] = "inpainting"
 
     def run(self):
-        self.started_at = datetime.datetime.now()
-        self.validate_params()
-        self.generate()
-        self.await_result()
-        self.finished_at = datetime.datetime.now()
-        self.path = save(self.result, self.path)
+        try:
+            self.started_at = datetime.datetime.now()
+            self.validate_params()
+            self.generate()
+            self.await_result()
+            self.finished_at = datetime.datetime.now()
+            self.path = save(self.result, self.path)
+        except Exception as e:
+            self.state = "failed"
+            self.exception = e
+            raise e
         return self.path
 
     def validate_params(self):
@@ -308,10 +317,13 @@ class Job:
             self.params["height"] = self.params.get("height", 1024)
             self.params["n"] = self.params.get("n", 2)
             self.best_size = 1024
+        if "ratio" in self.params:
+            self.params["width"], self.params["height"] = size_from_ratio(self.params["ratio"], self.best_size ** 2)
+            self.params.pop("ratio")
         if "height" in self.params:
-            self.params["height"] = round(self.params["height"] / 64) * 64
+            self.params["height"] = int(round(self.params["height"] / 64) * 64)
         if "width" in self.params:
-            self.params["width"] = round(self.params["width"] / 64) * 64
+            self.params["width"] = int(round(self.params["width"] / 64) * 64)
         if "workers" in self.params:
             self.payload["workers"] = self.params.pop("workers")
 
@@ -417,12 +429,7 @@ class Interrogation_job(Job):
     def run(self):
         self.started_at = datetime.datetime.now()
         self.interrogate()
-        try:
-            self.await_result()
-        except Exception as e:
-            self.state = "failed"
-            self.exception = e
-            raise e
+        self.await_result()
         self.finished_at = datetime.datetime.now()
         return self.result
 
