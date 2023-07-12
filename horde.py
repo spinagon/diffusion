@@ -142,7 +142,15 @@ class Connection:
 
     def upscale(self, img, method="RealESRGAN_x4plus", autoresize=False):
         """GFPGAN, RealESRGAN_x4plus, RealESRGAN_x2plus, RealESRGAN_x4plus_anime_6B, NMKD_Siax, 4x_AnimeSharp, CodeFormers, strip_background"""
-        return self.img2img(str(img), img, post_processing=[method], denoise=0.01, steps=1, autoresize=autoresize, sampler_name="k_euler")
+        return self.img2img(
+            str(img),
+            img,
+            post_processing=[method],
+            denoise=0.01,
+            steps=1,
+            autoresize=autoresize,
+            sampler_name="k_euler",
+        )
 
 
 def prepare_path(prompt=""):
