@@ -170,11 +170,6 @@ class Job:
         self.conn = conn
         self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
         self.best_size = 512
-        if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
-            self.params["width"] = self.params.get("width", 1024)
-            self.params["height"] = self.params.get("height", 1024)
-            self.params["n"] = self.params.get("n", 2)
-            self.best_size = 1024
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
@@ -214,6 +209,17 @@ class Job:
         if "denoise" in self.params:
             self.params["denoising_strength"] = float(self.params["denoise"])
             self.params.pop("denoise")
+        if "model" in self.params:
+            self.payload["models"] = [
+                await self.conn.match_model(self.params.pop("model"))
+            ]
+        if "models" in self.params:
+            self.payload["models"] = self.params.pop("models")
+        if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
+            self.params["width"] = self.params.get("width", 1024)
+            self.params["height"] = self.params.get("height", 1024)
+            self.params["n"] = self.params.get("n", 2)
+            self.best_size = 1024
         if "ratio" in self.params:
             self.params["width"], self.params["height"] = size_from_ratio(
                 simple_eval(self.params["ratio"]), self.best_size**2
@@ -227,17 +233,6 @@ class Job:
             self.params["control_type"] = self.params.pop("ct")
         if "control_type" in self.params:
             self.params["denoising_strength"] = 1
-        if "model" in self.params:
-            self.payload["models"] = [
-                await self.conn.match_model(self.params.pop("model"))
-            ]
-        if "models" in self.params:
-            self.payload["models"] = self.params.pop("models")
-        if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
-            self.params["width"] = self.params.get("width", 1024)
-            self.params["height"] = self.params.get("height", 1024)
-            self.params["n"] = self.params.get("n", 2)
-            self.best_size = 1024
         if "lora" in self.params:
             lora = self.params.pop("lora").split(":")
             if len(lora) > 1:
