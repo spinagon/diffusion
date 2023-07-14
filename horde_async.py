@@ -7,7 +7,7 @@ from io import BytesIO
 from pathlib import Path
 import pprint
 from thefuzz import process
-from ast import literal_eval
+from simpleeval import simple_eval
 
 import imageio
 import numpy as np
@@ -211,7 +211,7 @@ class Job:
             self.params.pop("denoise")
         if "ratio" in self.params:
             self.params["width"], self.params["height"] = size_from_ratio(
-                literal_eval(self.params["ratio"]), self.best_size**2
+                simple_eval(self.params["ratio"]), self.best_size**2
             )
             self.params.pop("ratio")
         if "height" in self.params:
