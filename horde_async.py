@@ -170,7 +170,7 @@ class Job:
         self.conn = conn
         self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
         self.best_size = 512
-        await self.validate_params()
+        self.validate_params()
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
@@ -190,7 +190,7 @@ class Job:
     async def run(self):
         self.started_at = datetime.datetime.now()
         print(f"Started: {self.prompt}")
-        await self.validate_params()
+        self.validate_params()
         await self.generate()
         print(f"Got uuid: {self.prompt} : {self.uuid}")
         for i in range(2):
@@ -202,7 +202,7 @@ class Job:
         self.finished_at = datetime.datetime.now()
         return self.result
 
-    async def validate_params(self):
+    def validate_params(self):
         if "seed" in self.params:
             self.params["seed"] = str(self.params["seed"])
         if "lora" in self.params:
