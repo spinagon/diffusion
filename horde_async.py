@@ -7,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 import pprint
 from thefuzz import process
+from ast import literal_eval
 
 import imageio
 import numpy as np
@@ -169,7 +170,7 @@ class Job:
         self.conn = conn
         self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
         self.best_size = 512
-        self.validate_params()
+        await self.validate_params()
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
