@@ -367,7 +367,9 @@ class Job:
     def status(self):
         try:
             if self.kind == "interrogate":
-                r = requests.get(self.conn.endpoint + "/interrogate/status/" + self.uuid)
+                r = requests.get(
+                    self.conn.endpoint + "/interrogate/status/" + self.uuid
+                )
             else:
                 r = requests.get(self.conn.endpoint + "/generate/status/" + self.uuid)
         except Exception as e:

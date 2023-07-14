@@ -402,6 +402,7 @@ def find_closest(name, variants, n=1):
         )
     ]
 
+
 def size_from_ratio(ratio, pixels):
     h = np.sqrt(pixels / ratio)
     w = pixels / h
