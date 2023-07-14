@@ -170,6 +170,11 @@ class Job:
         self.conn = conn
         self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
         self.best_size = 512
+        if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
+            self.params["width"] = self.params.get("width", 1024)
+            self.params["height"] = self.params.get("height", 1024)
+            self.params["n"] = self.params.get("n", 2)
+            self.best_size = 1024
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
