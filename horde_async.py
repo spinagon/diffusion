@@ -209,6 +209,11 @@ class Job:
         if "denoise" in self.params:
             self.params["denoising_strength"] = float(self.params["denoise"])
             self.params.pop("denoise")
+        if "ratio" in self.params:
+            self.params["width"], self.params["height"] = size_from_ratio(
+                self.params["ratio"], self.best_size**2
+            )
+            self.params.pop("ratio")
         if "height" in self.params:
             self.params["height"] = round(self.params["height"] / 64) * 64
         if "width" in self.params:
@@ -395,3 +400,8 @@ def find_closest(name, variants, n=1):
             name.lower(), variants, processor=lambda x: x.lower(), limit=n
         )
     ]
+
+def size_from_ratio(ratio, pixels):
+    h = np.sqrt(pixels / ratio)
+    w = pixels / h
+    return w, h

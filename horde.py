@@ -170,20 +170,25 @@ def save(result, path):
     paths = []
     for i, gen in enumerate(result["generations"]):
         info = b"\n" + json.dumps(result, indent=2).encode()
-        try:
-            img_url = gen.pop("img")
-            data = requests.get(img_url).content
-            seed = gen["seed"]
-            j = 0
+        img_url = gen.pop("img")
+        retry = 3
+        for retry_attempt in range(retry):
+            try:
+                data = requests.get(img_url).content
+                break
+            except Exception as e:
+                if retry_attempt < retry - 1:
+                    continue
+                print(repr(e))
+                print(result)
+        seed = gen["seed"]
+        j = 0
+        savepath = path + "_" + seed + "-" + str(j) + ".webp"
+        while Path(savepath).exists():
+            j += 1
             savepath = path + "_" + seed + "-" + str(j) + ".webp"
-            while Path(savepath).exists():
-                j += 1
-                savepath = path + "_" + seed + "-" + str(j) + ".webp"
-            paths.append(savepath)
-            Path(paths[-1]).write_bytes(data + info)
-        except Exception as e:
-            print(repr(e))
-            print(result)
+        paths.append(savepath)
+        Path(paths[-1]).write_bytes(data + info)
     return paths
 
 
@@ -357,19 +362,24 @@ class Job:
             raise e
         self.uuid = uuid
         self.state = "running"
+        self.last_status = {}
 
     def status(self):
-        if self.kind == "interrogate":
-            r = requests.get(self.conn.endpoint + "/interrogate/status/" + self.uuid)
-        else:
-            r = requests.get(self.conn.endpoint + "/generate/status/" + self.uuid)
+        try:
+            if self.kind == "interrogate":
+                r = requests.get(self.conn.endpoint + "/interrogate/status/" + self.uuid)
+            else:
+                r = requests.get(self.conn.endpoint + "/generate/status/" + self.uuid)
+        except Exception as e:
+            print(repr(e))
+            return self.last_status
         try:
             status = r.json()
             status["prompt"] = getattr(self, "prompt", "")
             self.last_status = status
             return status
         except Exception as e:
-            print(e)
+            print(repr(e))
             print(r)
             print(r.text)
 
