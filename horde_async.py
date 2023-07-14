@@ -212,7 +212,7 @@ class Job:
             self.params.pop("denoise")
         if "ratio" in self.params:
             self.params["width"], self.params["height"] = size_from_ratio(
-                self.params["ratio"], self.best_size**2
+                literal_eval(self.params["ratio"]), self.best_size**2
             )
             self.params.pop("ratio")
         if "height" in self.params:
