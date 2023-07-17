@@ -229,8 +229,6 @@ class Job:
             self.params["height"] = round(self.params["height"] / 64) * 64
         if "width" in self.params:
             self.params["width"] = round(self.params["width"] / 64) * 64
-        if "ct" in self.params:
-            self.params["control_type"] = self.params.pop("ct")
         if "control_type" in self.params:
             self.params["denoising_strength"] = 1
         if "lora" in self.params:
