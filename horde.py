@@ -304,7 +304,7 @@ class Job:
             self.generate()
             self.await_result()
             self.finished_at = datetime.datetime.now()
-            self.path = save(self.result, self.path)
+            self.paths = save(self.result, self.path)
         except Exception as e:
             self.state = "failed"
             self.exception = e
@@ -337,22 +337,28 @@ class Job:
             self.payload["workers"] = self.params.pop("workers")
 
     def clean(self):
-        self.source_image = None
-        self.source_mask = None
-        self.payload["source_image"] = None
-        self.payload["source_mask"] = None
+        del self.source_image
+        del self.source_mask
+        del self.payload["source_image"]
+        del self.payload["source_mask"]
 
     def generate(self):
         for i in range(3):
-            r = requests.post(
-                self.conn.endpoint + "/generate/async",
-                json=self.payload,
-                headers=self.conn.headers,
-            )
-            if r.status_code != 403:
-                break
-            else:
-                print(r.text)
+            try:
+                r = requests.post(
+                    self.conn.endpoint + "/generate/async",
+                    json=self.payload,
+                    headers=self.conn.headers,
+                )
+                if r.status_code != 403:
+                    break
+                else:
+                    print(r.text)
+            except Exception as e:
+                if i < 2:
+                    continue
+                else:
+                    raise e
         try:
             uuid = r.json()["id"]
         except Exception as e:
