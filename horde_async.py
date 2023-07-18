@@ -106,6 +106,9 @@ class Connection:
         self.model_names = [x["name"] for x in result]
         return result
 
+    async def close(self):
+        requests.close()
+
 
 def pack_image(img, format=None):
     if isinstance(img, str) or isinstance(img, Path):
