@@ -213,7 +213,7 @@ class Job:
                 {
                     "name": lora,
                     "model": strength,
-                    "clip": 1,
+                    "clip": strength,
                     "inject_trigger": inject,
                 }
             ]
