@@ -5,6 +5,9 @@ import re
 import time
 from io import BytesIO
 from pathlib import Path
+import pprint
+from thefuzz import process
+from simpleeval import simple_eval
 
 import imageio
 import numpy as np
@@ -24,6 +27,7 @@ class Connection:
         self.apikey = apikey
         self.agent = agent
         self.jobs = []
+        self.model_names = []
 
     async def init(self):
         global requests
@@ -35,7 +39,7 @@ class Connection:
         return r.json()
 
     def create_job(self, prompt):
-        return Job(prompt, self.apikey, self.endpoint, agent=self.agent)
+        return Job(prompt, conn=self)
 
     async def txt2img(self, prompt, options=None, **kwargs):
         job = self.create_job(prompt)
@@ -43,13 +47,14 @@ class Connection:
         job.params.update(kwargs)
         # self.jobs.append(job)
         result = await job.run()
+        info = job.get_info()
         await job.clean()
-        return result
+        return result, info
 
     async def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
         job = self.create_job(prompt)
         await job.set_image(img)
-        h, w = await dimension(img)
+        h, w = await dimension(img, best_size=job.best_size)
         job.params["height"] = h
         job.params["width"] = w
         job.params["denoising_strength"] = denoise
@@ -57,15 +62,16 @@ class Connection:
         job.params.update(kwargs)
         # self.jobs.append(job)
         result = await job.run()
+        info = job.get_info()
         await job.clean()
-        return result
+        return result, info
 
     async def inpaint(self, prompt, img, mask=None, options=None, denoise=1, **kwargs):
         job = self.create_job(prompt)
         await job.set_image(img)
         job.set_mask(mask)
         job.payload["source_processing"] = "inpainting"
-        h, w = await dimension(img)
+        h, w = await dimension(img, best_size=job.best_size)
         job.params["height"] = h
         job.params["width"] = w
         job.params["denoising_strength"] = denoise
@@ -73,16 +79,35 @@ class Connection:
         job.params.update(kwargs)
         # self.jobs.append(job)
         result = await job.run()
+        info = job.get_info()
         await job.clean()
-        return result
+        return result, info
 
     async def interrogate(self, img, caption_type="caption"):
         """
         caption_type="caption" | "interrogation" | "nsfw"
         """
-        job = Interrogation_job(img, self.apikey, self.endpoint, caption_type)
+        job = Interrogation_job(img, conn=self, caption_type=caption_type)
         result = await job.run()
         return result
+
+    async def match_model(self, name, n=1):
+        if len(self.model_names) == 0:
+            await self.models()
+        matches = find_closest(name, self.model_names, n)
+        if n == 1:
+            return matches[0]
+        else:
+            return matches
+
+    async def models(self):
+        result = (await requests.get(f"{self.endpoint}/status/models")).json()
+        result = sorted(result, key=lambda x: -x["count"])
+        self.model_names = [x["name"] for x in result]
+        return result
+
+    async def close(self):
+        requests.close()
 
 
 def pack_image(img, format=None):
@@ -105,7 +130,7 @@ def pack_image(img, format=None):
     return base64.encodebytes(image).decode()
 
 
-async def dimension(img):
+async def dimension(img, best_size=512):
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
     if isinstance(img, str) or isinstance(img, Path):
@@ -116,8 +141,8 @@ async def dimension(img):
         w, h = Image.open(img).size
     shorter = min(h, w)
     longer = max(h, w)
-    longer = int(round(longer / shorter * 512 / 64) * 64)
-    shorter = 512
+    longer = int(round(longer / shorter * best_size / 64) * 64)
+    shorter = best_size
     if w < h:
         width = shorter
         height = longer
@@ -128,11 +153,8 @@ async def dimension(img):
 
 
 class Job:
-    def __init__(self, prompt, apikey, endpoint, agent="unknown:0:unknown"):
+    def __init__(self, prompt, conn):
         self.prompt = prompt
-        self.apikey = apikey
-        self.endpoint = endpoint
-        self.agent = agent
         self.params = {"sampler_name": "k_dpmpp_2m", "steps": 20, "karras": True}
         self.payload = {
             "prompt": self.prompt,
@@ -148,11 +170,15 @@ class Job:
         self.source_image = None
         self.source_mask = None
         self.result = None
+        self.conn = conn
+        self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
+        self.best_size = 512
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
         self.payload["source_image"] = self.source_image
-        self.params["sampler_name"] = "k_euler_a"
+        self.params["sampler_name"] = "k_dpmpp_sde"
+        self.params["steps"] = 15
         if self.source_mask is None:
             self.kind = "img2img"
 
@@ -186,18 +212,28 @@ class Job:
         if "denoise" in self.params:
             self.params["denoising_strength"] = float(self.params["denoise"])
             self.params.pop("denoise")
+        if "model" in self.params:
+            self.payload["models"] = [
+                await self.conn.match_model(self.params.pop("model"))
+            ]
+        if "models" in self.params:
+            self.payload["models"] = self.params.pop("models")
+        if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
+            self.params["width"] = self.params.get("width", 1024)
+            self.params["height"] = self.params.get("height", 1024)
+            self.params["n"] = self.params.get("n", 2)
+            self.best_size = 1024
+        if "ratio" in self.params:
+            self.params["width"], self.params["height"] = size_from_ratio(
+                simple_eval(self.params["ratio"]), self.best_size**2
+            )
+            self.params.pop("ratio")
         if "height" in self.params:
             self.params["height"] = round(self.params["height"] / 64) * 64
         if "width" in self.params:
             self.params["width"] = round(self.params["width"] / 64) * 64
-        if "ct" in self.params:
-            self.params["control_type"] = self.params.pop("ct")
         if "control_type" in self.params:
             self.params["denoising_strength"] = 1
-        if "model" in self.params:
-            self.payload["models"] = [self.params.pop("model")]
-        if "models" in self.params:
-            self.payload["models"] = self.params.pop("models")
         if "lora" in self.params:
             lora = self.params.pop("lora").split(":")
             if len(lora) > 1:
@@ -225,10 +261,11 @@ class Job:
         self.payload["source_mask"] = None
 
     async def generate(self):
-        headers = {"apikey": self.apikey, "Client-Agent": self.agent}
         for i in range(3):
             r = await requests.post(
-                self.endpoint + "/generate/async", json=self.payload, headers=headers
+                self.conn.endpoint + "/generate/async",
+                json=self.payload,
+                headers=self.headers,
             )
             if r.status_code != 403:
                 break
@@ -247,12 +284,19 @@ class Job:
 
     async def status(self):
         if self.kind == "interrogate":
-            r = await requests.get(self.endpoint + "/interrogate/status/" + self.uuid)
+            r = await requests.get(
+                self.conn.endpoint + "/interrogate/status/" + self.uuid,
+                headers=self.headers,
+            )
         else:
-            r = await requests.get(self.endpoint + "/generate/status/" + self.uuid)
+            r = await requests.get(
+                self.conn.endpoint + "/generate/status/" + self.uuid,
+                headers=self.headers,
+            )
         try:
             status = r.json()
-            status["prompt"] = self.prompt
+            if "prompt" in status:
+                status["prompt"] = self.prompt
             self.last_status = status
             return status
         except Exception as e:
@@ -300,12 +344,20 @@ class Job:
         self.check_state()
         return "Job {}, state: {}".format(id(self), self.state)
 
+    def get_info(self):
+        payload = {}
+        payload.update(self.payload)
+        payload["source_image"] = None
+        payload["source_mask"] = None
+        info = [self.result, payload]
+        return info
+
 
 class Interrogation_job(Job):
-    def __init__(self, img, apikey, endpoint, caption_type="caption"):
+    def __init__(self, img, conn, caption_type="caption"):
         self.source_image = img
-        self.apikey = apikey
-        self.endpoint = endpoint
+        self.conn = conn
+        self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
         self.caption_type = caption_type
         self.payload = {
             "source_image": pack_image(img),
@@ -322,10 +374,11 @@ class Interrogation_job(Job):
         return self.result
 
     async def interrogate(self):
-        headers = {"apikey": self.apikey}
         for i in range(3):
             r = await requests.post(
-                self.endpoint + "/interrogate/async", json=self.payload, headers=headers
+                self.conn.endpoint + "/interrogate/async",
+                json=self.payload,
+                headers=self.headers,
             )
             if r.status_code != 403:
                 break
@@ -339,3 +392,18 @@ class Interrogation_job(Job):
             raise e
         self.uuid = uuid
         self.state = "running"
+
+
+def find_closest(name, variants, n=1):
+    return [
+        x[0]
+        for x in process.extract(
+            name.lower(), variants, processor=lambda x: x.lower(), limit=n
+        )
+    ]
+
+
+def size_from_ratio(ratio, pixels):
+    h = np.sqrt(pixels / ratio)
+    w = pixels / h
+    return w, h
