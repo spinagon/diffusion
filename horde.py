@@ -478,7 +478,7 @@ class Interrogation_job(Job):
 
 class Webp:
     def __init__(self, name):
-        from PyQt5 import QtCore, QtGui
+        from qtpy import QtCore, QtGui
 
         if isinstance(name, Path):
             self.name = name.as_posix()
