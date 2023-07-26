@@ -1,18 +1,18 @@
 # import requests
 import base64
 import datetime
+import json
 import pprint
 import random
 import re
 import time
 from io import BytesIO
 from pathlib import Path
-from thefuzz import process
-import json
 
 import imageio
 import requests
 from PIL import Image
+from thefuzz import process
 
 
 class Connection:
@@ -335,6 +335,8 @@ class Job:
             self.params["width"] = int(round(self.params["width"] / 64) * 64)
         if "workers" in self.params:
             self.payload["workers"] = self.params.pop("workers")
+        if "dry_run" in self.params:
+            self.payload["dry_run"] = self.params.pop("dry_run")
 
     def clean(self):
         del self.source_image
