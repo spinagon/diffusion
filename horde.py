@@ -304,12 +304,16 @@ class Job:
             self.generate()
             self.await_result()
             self.finished_at = datetime.datetime.now()
-            self.paths = save(self.result, self.path)
+            if hasattr(self, "uuid"):
+                self.paths = save(self.result, self.path)
         except Exception as e:
             self.state = "failed"
             self.exception = e
             raise e
-        return self.path
+        if hasattr(self, "uuid"):
+            return self.path
+        else:
+            return self.result
 
     def validate_params(self):
         self.payload["prompt"] = self.payload.get("prompt", "").replace("\r", "")
@@ -341,8 +345,10 @@ class Job:
     def clean(self):
         del self.source_image
         del self.source_mask
-        del self.payload["source_image"]
-        del self.payload["source_mask"]
+        if "source_image" in self.payload:
+            del self.payload["source_image"]
+        if "source_mask" in self.payload:
+            del self.payload["source_mask"]
 
     def generate(self):
         for i in range(3):
@@ -362,7 +368,12 @@ class Job:
                 else:
                     raise e
         try:
-            uuid = r.json()["id"]
+            response = r.json()
+            uuid = response.get("id", None)
+            if not uuid:
+                self.result = response
+                self.state = "done"
+                return
         except Exception as e:
             self.state = "failed"
             self.result = (r, r.text)
@@ -394,6 +405,8 @@ class Job:
             print(r.text)
 
     def await_result(self):
+        if self.state == "done":
+            return
         wait_list = (
             [6]
             + np.diff(np.logspace(np.log10(6), np.log10(60), num=10))
