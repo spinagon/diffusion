@@ -282,7 +282,7 @@ class Job:
         self.uuid = uuid
         self.state = "running"
 
-    async def status(self):
+    async def check(self, kind):
         if self.kind == "interrogate":
             r = await requests.get(
                 self.conn.endpoint + "/interrogate/status/" + self.uuid,
@@ -290,7 +290,7 @@ class Job:
             )
         else:
             r = await requests.get(
-                self.conn.endpoint + "/generate/status/" + self.uuid,
+                self.conn.endpoint + f"/generate/{kind}/" + self.uuid,
                 headers=self.headers,
             )
         try:
@@ -305,6 +305,9 @@ class Job:
             print(r)
             print(r.text)
 
+    async def status(self):
+        return await self.check("status")
+
     async def await_result(self):
         wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10, 6]
         waited = 0
@@ -314,7 +317,7 @@ class Job:
             index = min(i, len(wait_list) - 1)
             await asyncio.sleep(wait_list[index])
             waited += wait_list[index]
-            await self.status()
+            await self.check()
             d = self.last_status
             d["waited"] = waited
             if i % 10 == 9:
@@ -326,7 +329,7 @@ class Job:
             if (d.get("done", False) or d.get("state", None) == "done") and d.get(
                 "processing", 0
             ) == 0:
-                self.result = d
+                self.result = self.status()
                 self.result["waited"] = waited
                 self.state = "done"
                 return
