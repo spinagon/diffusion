@@ -282,7 +282,7 @@ class Job:
         self.uuid = uuid
         self.state = "running"
 
-    async def check(self, kind):
+    async def check(self, kind="check"):
         if self.kind == "interrogate":
             r = await requests.get(
                 self.conn.endpoint + "/interrogate/status/" + self.uuid,
