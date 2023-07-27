@@ -329,7 +329,7 @@ class Job:
             if (d.get("done", False) or d.get("state", None) == "done") and d.get(
                 "processing", 0
             ) == 0:
-                self.result = self.status()
+                self.result = await self.status()
                 self.result["waited"] = waited
                 self.state = "done"
                 return
