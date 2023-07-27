@@ -372,14 +372,16 @@ class Job:
         self.state = "running"
         self.last_status = {}
 
-    def status(self):
+    def check(self, kind="check"):
         try:
             if self.kind == "interrogate":
                 r = requests.get(
                     self.conn.endpoint + "/interrogate/status/" + self.uuid
                 )
             else:
-                r = requests.get(self.conn.endpoint + "/generate/status/" + self.uuid)
+                r = requests.get(
+                    self.conn.endpoint + "/generate/{}/".format(kind) + self.uuid
+                )
         except Exception as e:
             print(repr(e))
             return self.last_status
@@ -393,20 +395,24 @@ class Job:
             print(r)
             print(r.text)
 
+    def status(self):
+        return self.check("status")
+
     def await_result(self):
-        wait_list = (
+        """wait_list = (
             [6]
             + np.diff(np.logspace(np.log10(6), np.log10(60), num=10))
             .round()
             .astype(int)
             .tolist()
             + [6] * 100
-        )
+        )"""
+        wait_list = [1] * 20 * 60
         waited = 0
         for t in wait_list:
             time.sleep(t)
             waited += t
-            self.status()
+            self.check()
             d = self.last_status
             d["waited"] = waited
             if "message" in d:
@@ -414,7 +420,7 @@ class Job:
             if (d.get("done", False) or d.get("state", None) == "done") and d.get(
                 "processing", 0
             ) == 0:
-                self.result = d
+                self.result = self.status()
                 self.result["waited"] = waited
                 self.result["payload"] = self.payload
                 self.result["payload"]["source_image"] = ""
