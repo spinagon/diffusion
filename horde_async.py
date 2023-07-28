@@ -309,7 +309,7 @@ class Job:
         return await self.check("status")
 
     async def await_result(self):
-        #wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10, 6]
+        # wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10, 6]
         wait_list = [1]
         waited = 0
         for i in range(100):
