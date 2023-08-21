@@ -8,7 +8,7 @@ prompt_text = "cat photo, nature, lakeside"
 
 def queue_prompt(prompt):
     p = {"prompt": prompt}
-    data = json.dumps(p).encode('utf-8')
+    data = json.dumps(p).encode("utf-8")
     r = requests.post("http://127.0.0.1:8188/prompt", json=p)
     print(r.text)
     r = requests.get("http://127.0.0.1:8188/queue")
