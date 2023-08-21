@@ -450,8 +450,8 @@ class Job:
 
     def __repr__(self):
         self.check_state()
-        return "<Job {}, {}, state: {}>".format(
-            id(self), repr(self.payload.get("prompt", "")[:40]), self.state
+        return "<Job {}, {}, state: {}, wait: {}>".format(
+            id(self), repr(self.payload.get("prompt", "")[:40]), self.state, self.last_status.get("wait_time")
         )
 
 
