@@ -276,6 +276,7 @@ class Job:
         self.result = None
         self.path = prepare_path(self.prompt)
         self.best_size = 512
+        self.last_status = {}
         self.validate_params()
 
     def set_image(self, image):
@@ -381,7 +382,6 @@ class Job:
             raise e
         self.uuid = uuid
         self.state = "running"
-        self.last_status = {}
 
     def check(self, kind="check"):
         try:
