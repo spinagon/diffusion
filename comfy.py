@@ -5,6 +5,7 @@ import random
 
 prompt_text = "cat photo, nature, lakeside"
 
+
 def queue_prompt(prompt):
     p = {"prompt": prompt}
     data = json.dumps(p).encode("utf-8")
