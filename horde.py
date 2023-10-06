@@ -348,7 +348,6 @@ class Job:
             for embedding in embeddings:
                 self.payload["params"]["tis"].append({"name": embedding})
 
-
     def clean(self):
         del self.source_image
         del self.source_mask
