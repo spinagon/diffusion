@@ -159,7 +159,7 @@ class Job:
         self.payload = {
             "prompt": self.prompt,
             "params": self.params,
-            "models": ["Deliberate"],
+            "models": ["Deliberate 3.0"],
             "shared": True,
             "nsfw": True,
             "replacement_filter": True,

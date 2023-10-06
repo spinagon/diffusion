@@ -342,6 +342,12 @@ class Job:
             self.payload["workers"] = self.params.pop("workers")
         if "dry_run" in self.params:
             self.payload["dry_run"] = self.params.pop("dry_run")
+        embeddings = re.findall("embedding:(\d+)", self.payload["prompt"])
+        if embeddings and not self.payload["params"].get("tis", []):
+            self.payload["params"]["tis"] = []
+            for embedding in embeddings:
+                self.payload["params"]["tis"].append({"name": embedding})
+
 
     def clean(self):
         del self.source_image
