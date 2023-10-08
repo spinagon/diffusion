@@ -155,7 +155,12 @@ async def dimension(img, best_size=512):
 class Job:
     def __init__(self, prompt, conn):
         self.prompt = prompt
-        self.params = {"sampler_name": "k_dpmpp_2m", "steps": 20, "karras": True}
+        self.params = {
+            "sampler_name": "k_dpmpp_2m",
+            "steps": 20,
+            "karras": True,
+            "seed_variation": 1,
+        }
         self.payload = {
             "prompt": self.prompt,
             "params": self.params,
