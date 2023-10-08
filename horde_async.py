@@ -221,7 +221,6 @@ class Job:
         if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
-            self.params["n"] = self.params.get("n", 2)
             self.best_size = 1024
         if "ratio" in self.params:
             self.params["width"], self.params["height"] = size_from_ratio(
