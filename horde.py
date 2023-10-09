@@ -326,7 +326,7 @@ class Job:
             self.params["cfg_scale"] = 5
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
-        if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
+        if len([x for x in self.payload.get("models", []) if "xl" in x.lower()]) > 0:
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
             self.params["n"] = self.params.get("n", 2)
