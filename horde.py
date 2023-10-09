@@ -262,7 +262,7 @@ class Job:
         self.payload = {
             "prompt": self.prompt,
             "params": self.params,
-            "models": ["Deliberate"],
+            "models": ["Deliberate 3.0"],
             "shared": True,
             "nsfw": True,
             "replacement_filter": True,
@@ -322,6 +322,8 @@ class Job:
             self.params["seed"] = str(self.params["seed"])
         if "model" in self.params:
             self.payload["models"] = [self.conn.match_model(self.params.pop("model"))]
+        if "cfg_scale" not in self.params:
+            self.params["cfg_scale"] = 5
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
         if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
