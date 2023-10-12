@@ -19,7 +19,7 @@ from .aiohttp_backend import Http_backend
 class Connection:
     def __init__(
         self,
-        endpoint="https://stablehorde.net/api/v2",
+        endpoint="https://aihorde.net/api/v2",
         apikey=None,
         agent="unknown:0:unknown",
     ):

@@ -18,9 +18,9 @@ from thefuzz import process
 class Connection:
     def __init__(
         self,
-        endpoint="https://stablehorde.net/api/v2",
+        endpoint="https://aihorde.net/api/v2",
         apikey=None,
-        agent="diff_lib:0.1:flak.yar@gmail.com",
+        agent="diff_lib:0.2:flak.yar@gmail.com",
     ):
         self.endpoint = endpoint
         self.apikey = apikey
@@ -48,18 +48,21 @@ class Connection:
     ):
         job = Job(prompt, self)
         job.set_image(img)
+        job.params["denoising_strength"] = denoise
+        job.params.update(options or {})
+        job.params.update(kwargs)
+        job.validate_params()
+
         if "width" not in kwargs and "height" not in kwargs:
             if autoresize:
                 h, w = dimension(img, best_size=job.best_size)
                 job.params["height"] = h
                 job.params["width"] = w
             else:
-                h, w = dimension(img, resize=False, best_size=job.best_size)
+                h, w = dimension(img, best_size=job.best_size, resize=False)
                 job.params["height"] = h
                 job.params["width"] = w
-        job.params["denoising_strength"] = denoise
-        job.params.update(options or {})
-        job.params.update(kwargs)
+
         self.jobs.append(job)
         result = job.run()
         job.clean()
@@ -96,13 +99,13 @@ class Connection:
         return result
 
     def models(self):
-        result = requests.get("https://stablehorde.net/api/v2/status/models").json()
+        result = requests.get(self.endpoint + "/status/models").json()
         result = sorted(result, key=lambda x: -x["count"])
         self.model_names = [x["name"] for x in result]
         return result
 
     def model_stats(self, period="month"):
-        result = requests.get("https://stablehorde.net/api/v2/stats/img/models").json()
+        result = requests.get(self.endpoint + "/stats/img/models").json()
         if period is None:
             ret = []
             for k, v in result.items():
@@ -113,7 +116,7 @@ class Connection:
         return result
 
     def heartbeat(self):
-        result = requests.get("https://stablehorde.net/api/v2/status/heartbeat").json()
+        result = requests.get(self.endpoint + "/status/heartbeat").json()
         return result
 
     def match_model(self, name, n=1):
@@ -220,7 +223,7 @@ def get_slug(prompt):
     return "_".join(re.findall("[a-zA-Z#0-9]+", prompt))[:35]
 
 
-def dimension(img, resize=True, best_size=512):
+def dimension(img, best_size=512, resize=True):
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
     if isinstance(img, Image.Image):
