@@ -233,11 +233,11 @@ class Job:
             )
             self.params.pop("ratio")
         if "hires_fix" in self.params:
-            h = params.get("height", 512)
-            w = params.get("width", 512)
+            h = self.params.get("height", 512)
+            w = self.params.get("width", 512)
             if min(h, w) <= 512:
-                params["height"] = h * 2
-                params["width"] = w * 2
+                self.params["height"] = h * 2
+                self.params["width"] = w * 2
         if "height" in self.params:
             self.params["height"] = round(self.params["height"] / 64) * 64
         if "width" in self.params:
