@@ -229,7 +229,7 @@ class Job:
             self.best_size = 1024
         if "ratio" in self.params:
             self.params["width"], self.params["height"] = size_from_ratio(
-                simple_eval(self.params["ratio"]), self.best_size**2
+                to_float(self.params["ratio"]), self.best_size**2
             )
             self.params.pop("ratio")
         if "hires_fix" in self.params:
@@ -421,3 +421,9 @@ def size_from_ratio(ratio, pixels):
     h = np.sqrt(pixels / ratio)
     w = pixels / h
     return w, h
+
+def to_float(x):
+    if hasattr(x, "real"):
+        return float(x)
+    else:
+        return simple_eval(x)
