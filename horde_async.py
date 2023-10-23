@@ -422,6 +422,7 @@ def size_from_ratio(ratio, pixels):
     w = pixels / h
     return w, h
 
+
 def to_float(x):
     if hasattr(x, "real"):
         return float(x)
