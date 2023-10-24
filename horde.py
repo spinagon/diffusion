@@ -261,7 +261,12 @@ class Job:
     def __init__(self, prompt, conn):
         self.prompt = prompt
         self.conn = conn
-        self.params = {"sampler_name": "k_dpmpp_2m", "steps": 20, "karras": True, "seed_variation": 1,}
+        self.params = {
+            "sampler_name": "k_dpmpp_2m",
+            "steps": 20,
+            "karras": True,
+            "seed_variation": 1,
+        }
         self.payload = {
             "prompt": self.prompt,
             "params": self.params,
