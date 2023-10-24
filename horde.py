@@ -266,6 +266,7 @@ class Job:
             "prompt": self.prompt,
             "params": self.params,
             "models": ["Deliberate 3.0"],
+            "seed_variation": 1,
             "shared": True,
             "nsfw": True,
             "replacement_filter": True,
@@ -334,6 +335,8 @@ class Job:
             self.params["height"] = self.params.get("height", 1024)
             self.params["n"] = self.params.get("n", 2)
             self.best_size = 1024
+        if len([x for x in self.payload.get("models", []) if "sdxl" in x.lower()]) > 0:
+            self.params["clip_skip"] = self.params.get("clip_skip", 2)
         if "ratio" in self.params:
             self.params["width"], self.params["height"] = size_from_ratio(
                 self.params["ratio"], self.best_size**2

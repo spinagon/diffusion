@@ -223,10 +223,12 @@ class Job:
             ]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
-        if len([x for x in self.payload.get("models", []) if "SDXL" in x]) > 0:
+        if len([x for x in self.payload.get("models", []) if "xl" in x.lower()]) > 0:
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
             self.best_size = 1024
+        if len([x for x in self.payload.get("models", []) if "sdxl" in x.lower()]) > 0:
+            self.params["clip_skip"] = self.params.get("clip_skip", 2)
         if "ratio" in self.params:
             self.params["width"], self.params["height"] = size_from_ratio(
                 to_float(self.params["ratio"]), self.best_size**2
