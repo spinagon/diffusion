@@ -245,7 +245,6 @@ class Job:
         if "control_type" in self.params:
             self.params["denoising_strength"] = 1
         if "lora" in self.params:
-            print(self.params)
             self.params["loras"] = []
             for x in self.params.pop("lora"):
                 lora = x.split(":")
@@ -266,7 +265,6 @@ class Job:
                         "inject_trigger": inject,
                     }
                 )
-            print(self.params)
 
     async def clean(self):
         self.source_image = None
