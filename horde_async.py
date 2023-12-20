@@ -247,24 +247,26 @@ class Job:
         if "control_type" in self.params:
             self.params["denoising_strength"] = 1
         if "lora" in self.params:
-            lora = self.params.pop("lora").split(":")
-            if len(lora) > 1:
-                strength = float(lora[1])
-            else:
-                strength = 1
-            lora = lora[0]
-            if "inject" in self.params:
-                inject = self.params.pop("inject")
-            else:
-                inject = "any"
-            self.params["loras"] = [
-                {
-                    "name": lora,
-                    "model": strength,
-                    "clip": strength,
-                    "inject_trigger": inject,
-                }
-            ]
+            self.params["loras"] = []
+            for x in self.params.pop("lora"):
+                lora = x.split(":")
+                if len(lora) > 1:
+                    strength = float(lora[1])
+                else:
+                    strength = 1
+                lora = lora[0]
+                if "inject" in self.params:
+                    inject = self.params.pop("inject")
+                else:
+                    inject = "any"
+                self.params["loras"].append(
+                    {
+                        "name": lora,
+                        "model": strength,
+                        "clip": strength,
+                        "inject_trigger": inject,
+                    }
+                )
 
     async def clean(self):
         self.source_image = None
