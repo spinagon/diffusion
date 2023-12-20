@@ -247,7 +247,7 @@ class Job:
         if "lora" in self.params:
             self.params["loras"] = []
             for x in self.params.pop("lora"):
-                lora = x.split(":")
+                lora = str(x).split(":")
                 if len(lora) > 1:
                     strength = float(lora[1])
                 else:
