@@ -267,6 +267,7 @@ class Job:
                         "inject_trigger": inject,
                     }
                 )
+            print(self.params)
 
     async def clean(self):
         self.source_image = None
