@@ -1,7 +1,8 @@
 import json
-import requests
-from pathlib import Path
 import random
+from pathlib import Path
+
+import requests
 
 prompt_text = "cat photo, nature, lakeside"
 
