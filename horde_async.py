@@ -327,12 +327,15 @@ class Job:
         # wait_list = [7, 1, 1, 2, 2, 7, 10, 10, 10, 10, 6]
         wait_list = [1]
         waited = 0
-        for i in range(100):
+        i = 0
+        t = time.time()
+        while waited < 20 * 60:
+            waited = time.time() - t
+            i += 1
             if self.state == "failed":
                 return
             index = min(i, len(wait_list) - 1)
             await asyncio.sleep(wait_list[index])
-            waited += wait_list[index]
             await self.check()
             d = self.last_status
             d["waited"] = waited
@@ -341,7 +344,6 @@ class Job:
             if "message" in d:
                 print("Message in status:", d["message"])
                 await asyncio.sleep(1)
-                waited += 1
             if (d.get("done", False) or d.get("state", None) == "done") and d.get(
                 "processing", 0
             ) == 0:
