@@ -265,7 +265,7 @@ class Job:
                         "model": strength,
                         "clip": strength,
                         "inject_trigger": inject,
-                        "is_version": True,
+                        "is_version": False,
                     }
                 )
 
