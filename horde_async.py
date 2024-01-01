@@ -254,7 +254,7 @@ class Job:
                     strength = float(lora[1])
                 else:
                     strength = 1
-                lora = lora[0]\
+                lora = lora[0]
                 if lora[0] == "v":
                     is_version = True
                     lora = lora[1:]
