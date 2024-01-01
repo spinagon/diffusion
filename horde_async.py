@@ -254,7 +254,12 @@ class Job:
                     strength = float(lora[1])
                 else:
                     strength = 1
-                lora = lora[0]
+                lora = lora[0]\
+                if lora[0] == "v":
+                    is_version = True
+                    lora = lora[1:]
+                else:
+                    is_version = False
                 if "inject" in self.params:
                     inject = self.params.pop("inject")
                 else:
@@ -265,7 +270,7 @@ class Job:
                         "model": strength,
                         "clip": strength,
                         "inject_trigger": inject,
-                        "is_version": False,
+                        "is_version": is_version,
                     }
                 )
 
