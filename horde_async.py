@@ -91,9 +91,10 @@ class Connection:
         result = await job.run()
         return result
 
-    async def match_model(self, name, n=1):
-        if len(self.model_names) == 0:
+    async def match_model(self, name, n=1, t=[0]):
+        if len(self.model_names) == 0 or time.time() - t[0] > 10 * 60:
             await self.models()
+            t[0] = time.time()
         matches = find_closest(name, self.model_names, n)
         if n == 1:
             return matches[0]
