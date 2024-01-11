@@ -224,7 +224,7 @@ class Job:
             ]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
-        if len([x for x in self.payload.get("models", []) if "xl" in x.lower()]) > 0:
+        if len([x for x in self.payload.get("models", []) if is_xl(x)]) > 0:
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
             self.best_size = 1024
@@ -441,3 +441,7 @@ def to_float(x):
         return float(x)
     else:
         return simple_eval(x)
+
+
+def is_xl(x):
+    return "xl" in x.lower() or "fustercluck" in x.lower()
