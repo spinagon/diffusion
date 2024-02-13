@@ -128,6 +128,9 @@ def pack_image(img, format=None):
         image = data.getvalue()
     elif isinstance(img, bytes):
         image = img
+    else:
+        image = img
+        print(img)
     return base64.encodebytes(image).decode()
 
 
