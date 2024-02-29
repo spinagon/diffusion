@@ -227,15 +227,13 @@ class Job:
             ]
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
-        if (
-            len(
-                [x for x in self.payload.get("models", []) if is_xl(x) or is_cascade(x)]
-            )
-            > 0
-        ):
+        model = self.payload.get("models", [""])[0]
+        if is_xl(model) or is_cascade(model):
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
             self.best_size = 1024
+        if is_cascade(model):
+            self.params["sampler_name"] = "k_euler_a"
         # if len([x for x in self.payload.get("models", []) if "sdxl" in x.lower()]) > 0:
         #    self.params["clip_skip"] = self.params.get("clip_skip", 2)
         if "ratio" in self.params:
