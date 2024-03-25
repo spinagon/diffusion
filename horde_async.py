@@ -193,6 +193,7 @@ class Job:
         self.source_image = pack_image(image)
         self.payload["source_image"] = self.source_image
         self.params["sampler_name"] = "k_euler_a"
+        self.params["karras"] = False
         self.params["steps"] = 20
         if self.source_mask is None:
             self.kind = "img2img"
