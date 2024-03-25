@@ -54,7 +54,7 @@ class Connection:
     async def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
         job = self.create_job(prompt)
         await job.set_image(img)
-        await self.validate_params()
+        await job.validate_params()
         h, w = await dimension(img, best_size=job.best_size)
         print("Calculated dimensions:", h, w)
         job.params["height"] = h
