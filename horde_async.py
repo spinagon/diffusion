@@ -54,6 +54,7 @@ class Connection:
     async def img2img(self, prompt, img, options=None, denoise=0.55, **kwargs):
         job = self.create_job(prompt)
         await job.set_image(img)
+        await self.validate_params()
         h, w = await dimension(img, best_size=job.best_size)
         print("Calculated dimensions:", h, w)
         job.params["height"] = h
@@ -232,8 +233,10 @@ class Job:
         model = self.payload.get("models", [""])[0]
         if "source_processing" in self.params:
             self.payload["source_processing"] = self.params["source_processing"]
+            self.params.pop("source_processing")
         if "extra_source_images" in self.params:
             self.payload["extra_source_images"] = self.params["extra_source_images"]
+            self.params.pop("extra_source_images")
         if is_xl(model) or is_cascade(model):
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
@@ -460,5 +463,4 @@ def is_xl(x):
 
 
 def is_cascade(x):
-    print("is_cascade args:", x)
     return "cascade" in x.lower()
