@@ -137,7 +137,6 @@ def pack_image(img, format=None):
 
 
 async def dimension(img, best_size=512):
-    print(img.shape, best_size)
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
     if isinstance(img, str) or isinstance(img, Path):
@@ -146,6 +145,7 @@ async def dimension(img, best_size=512):
     if isinstance(img, bytes):
         img = BytesIO(img)
         w, h = Image.open(img).size
+    print(h, w, best_size)
     shorter = min(h, w)
     longer = max(h, w)
     factor = np.sqrt((best_size * best_size) / (shorter * longer))
