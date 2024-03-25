@@ -228,6 +228,10 @@ class Job:
         if "models" in self.params:
             self.payload["models"] = self.params.pop("models")
         model = self.payload.get("models", [""])[0]
+        if "source_processing" in self.params:
+            self.payload["source_processing"] = self.params["source_processing"]
+        if "extra_source_images" in self.params:
+            self.payload["extra_source_images"] = self.params["extra_source_images"]
         if is_xl(model) or is_cascade(model):
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
