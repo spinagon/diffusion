@@ -55,6 +55,7 @@ class Connection:
         job = self.create_job(prompt)
         await job.set_image(img)
         await job.validate_params()
+        pprint(vars(job))
         h, w = await dimension(img, best_size=job.best_size)
         print("Calculated dimensions:", h, w)
         job.params["height"] = h
@@ -185,8 +186,7 @@ class Job:
         self.result = None
         self.conn = conn
         self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
-        if not hasattr(self, "best_size"):
-            self.best_size = 512
+        self.best_size = 512
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
