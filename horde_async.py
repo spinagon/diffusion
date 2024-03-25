@@ -147,7 +147,7 @@ async def dimension(img, best_size=512):
         w, h = Image.open(img).size
     shorter = min(h, w)
     longer = max(h, w)
-    factor = (best_size * best_size) / (shorter * longer)
+    factor = np.sqrt((best_size * best_size) / (shorter * longer))
     longer = int(round(longer * factor // 64) * 64)
     shorter = int(round(shorter * factor // 64) * 64)
     if w < h:
