@@ -185,7 +185,8 @@ class Job:
         self.result = None
         self.conn = conn
         self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
-        self.best_size = 512
+        if not hasattr(self, "best_size"):
+            self.best_size = 512
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
