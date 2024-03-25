@@ -460,4 +460,5 @@ def is_xl(x):
 
 
 def is_cascade(x):
+    print("is_cascade args:", x)
     return "cascade" in x.lower()
