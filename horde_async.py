@@ -55,7 +55,7 @@ class Connection:
         job = self.create_job(prompt)
         await job.set_image(img)
         await job.validate_params()
-        pprint(vars(job))
+        pprint.pprint(vars(job))
         h, w = await dimension(img, best_size=job.best_size)
         print("Calculated dimensions:", h, w)
         job.params["height"] = h
