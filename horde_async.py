@@ -137,6 +137,7 @@ def pack_image(img, format=None):
 
 
 async def dimension(img, best_size=512):
+    print(img.shape, best_size)
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
     if isinstance(img, str) or isinstance(img, Path):
