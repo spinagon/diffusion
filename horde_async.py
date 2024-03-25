@@ -55,6 +55,7 @@ class Connection:
         job = self.create_job(prompt)
         await job.set_image(img)
         h, w = await dimension(img, best_size=job.best_size)
+        print("Calculated dimensions:", h, w)
         job.params["height"] = h
         job.params["width"] = w
         job.params["denoising_strength"] = denoise
@@ -145,8 +146,9 @@ async def dimension(img, best_size=512):
         w, h = Image.open(img).size
     shorter = min(h, w)
     longer = max(h, w)
-    longer = int(round(longer / shorter * best_size / 64) * 64)
-    shorter = best_size
+    factor = (best_size * best_size) / (shorter * longer)
+    longer = int(round(longer * factor // 64) * 64)
+    shorter = int(round(shorter * factor // 64) * 64)
     if w < h:
         width = shorter
         height = longer
@@ -186,8 +188,8 @@ class Job:
     async def set_image(self, image):
         self.source_image = pack_image(image)
         self.payload["source_image"] = self.source_image
-        self.params["sampler_name"] = "k_dpmpp_sde"
-        self.params["steps"] = 15
+        self.params["sampler_name"] = "k_euler_a"
+        self.params["steps"] = 20
         if self.source_mask is None:
             self.kind = "img2img"
 
