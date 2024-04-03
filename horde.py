@@ -292,7 +292,9 @@ class Job:
             if len(image) > 1:
                 extra_source_images = []
                 for extra_img in image[1:]:
-                    extra_source_images.append({"image": pack_image(extra_img), "strength": 1})
+                    extra_source_images.append(
+                        {"image": pack_image(extra_img), "strength": 1}
+                    )
                 self.payload["extra_source_images"] = extra_source_images
             image = image[0]
         self.source_image = pack_image(image)
