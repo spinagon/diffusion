@@ -288,9 +288,17 @@ class Job:
         self.validate_params()
 
     def set_image(self, image):
+        if isinstance(image, list) or isinstance(image, tuple):
+            if len(image) > 1:
+                extra_source_images = []
+                for extra_img in image[1:]:
+                    extra_source_images.append({"image": pack_image(extra_img), "strength": 1})
+                self.payload["extra_source_images"] = extra_source_images
+            image = image[0]
         self.source_image = pack_image(image)
         self.payload["source_image"] = self.source_image
         self.params["sampler_name"] = "k_euler_a"
+        self.params["karras"] = False
         self.params["steps"] = 20
         if self.source_mask is None:
             self.kind = "img2img"
@@ -336,8 +344,10 @@ class Job:
             self.payload["models"] = self.params.pop("models")
         if "source_processing" in self.params:
             self.payload["source_processing"] = self.params["source_processing"]
+            self.params.pop("source_processing")
         if "extra_source_images" in self.params:
             self.payload["extra_source_images"] = self.params["extra_source_images"]
+            self.params.pop("extra_source_images")
         if len([x for x in self.payload.get("models", []) if "xl" in x.lower()]) > 0:
             self.params["width"] = self.params.get("width", 1024)
             self.params["height"] = self.params.get("height", 1024)
@@ -369,6 +379,8 @@ class Job:
         del self.source_mask
         if "source_image" in self.payload:
             del self.payload["source_image"]
+        if "extra_source_images" in self.payload:
+            del self.payload["extra_source_images"]
         if "source_mask" in self.payload:
             del self.payload["source_mask"]
 
