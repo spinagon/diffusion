@@ -132,6 +132,8 @@ def pack_image(img, format=None):
         image = data.getvalue()
     elif isinstance(img, bytes):
         image = img
+    elif isinstance(img, BytesIO):
+        image = data.getvalue()
     else:
         image = img
         print(img)
