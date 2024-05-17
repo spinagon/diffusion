@@ -149,6 +149,8 @@ async def dimension(img, best_size=512):
     if isinstance(img, bytes):
         img = BytesIO(img)
         w, h = Image.open(img).size
+    if isinstance(img, BytesIO):
+        w, h = Image.open(img).size
     print(h, w, best_size)
     shorter = min(h, w)
     longer = max(h, w)
