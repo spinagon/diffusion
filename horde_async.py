@@ -231,11 +231,8 @@ class Job:
         if "cfg_scale" in self.params:
             self.params["cfg_scale"] = float(self.params["cfg_scale"])
         if "extra_texts" in self.params:
-            print(self.params["extra_texts"])
-            if isinstance(self.params["extra_texts"], str):
-                self.params["extra_texts"] = []
-                for x in json.loads(self.params["extra_texts"]):
-                    self.params["extra_texts"].append(x)
+            if not isinstance(self.params["extra_texts"], list):
+                self.params["extra_texts"] = json.loads(self.params["extra_texts"])
         if "denoise" in self.params:
             self.params["denoising_strength"] = float(self.params["denoise"])
             self.params.pop("denoise")
