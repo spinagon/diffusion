@@ -231,7 +231,8 @@ class Job:
         if "cfg_scale" in self.params:
             self.params["cfg_scale"] = float(self.params["cfg_scale"])
         if "extra_texts" in self.params:
-            if not isinstance(self.params["extra_texts"], list):
+            print(self.params["extra_texts"])
+            if isinstance(self.params["extra_texts"], str):
                 self.params["extra_texts"] = []
                 for x in json.loads(self.params["extra_texts"]):
                     self.params["extra_texts"].append(x)
