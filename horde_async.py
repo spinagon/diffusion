@@ -316,6 +316,7 @@ class Job:
 
     async def generate(self):
         for i in range(3):
+            print(pprint.pformat(self.payload)[:2000])
             r = await requests.post(
                 self.conn.endpoint + "/generate/async",
                 json=self.payload,
