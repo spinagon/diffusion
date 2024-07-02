@@ -246,6 +246,9 @@ class Job:
         if "source_processing" in self.params:
             self.payload["source_processing"] = self.params["source_processing"]
             self.params.pop("source_processing")
+        if "transparency" in self.params:
+            self.payload["transparency"] = self.params["transparency"]
+            self.params.pop("transparency")
         if "extra_source_images" in self.params:
             self.payload["extra_source_images"] = self.params["extra_source_images"]
             self.params.pop("extra_source_images")
