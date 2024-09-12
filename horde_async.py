@@ -173,7 +173,7 @@ class Job:
         self.params = {
             "sampler_name": "k_dpmpp_2m",
             "steps": 20,
-            "karras": True,
+            "karras": False,
             "seed_variation": 1,
         }
         self.payload = {
