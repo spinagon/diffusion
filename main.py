@@ -54,7 +54,7 @@ class Connection:
         steps=30,
         scale=7,
         inpaint_padding=64,
-        **kwargs
+        **kwargs,
     ):
         if isinstance(img, str) or isinstance(img, Path):
             h, w, *_ = imageio.imread(img).shape
