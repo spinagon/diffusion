@@ -171,10 +171,11 @@ class Job:
     def __init__(self, prompt, conn):
         self.prompt = prompt
         self.params = {
-            "sampler_name": "k_dpmpp_2m",
+            "sampler_name": "k_euler",
             "steps": 8,
             "karras": False,
             "seed_variation": 1,
+            "cfg_scale": 1
         }
         self.payload = {
             "prompt": self.prompt,
