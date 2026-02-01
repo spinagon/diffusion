@@ -214,6 +214,7 @@ class Job:
         self.started_at = datetime.datetime.now()
         print(f"Started: {self.prompt}")
         await self.validate_params()
+        print(self.params)
         await self.generate()
         print(f"Got uuid: {self.prompt} : {self.uuid}")
         for i in range(2):
