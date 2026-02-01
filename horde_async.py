@@ -1,10 +1,10 @@
 import asyncio
 import base64
 import datetime
+import json
 import pprint
 import re
 import time
-import json
 from io import BytesIO
 from pathlib import Path
 
@@ -141,7 +141,7 @@ def pack_image(img, format=None):
     return base64.encodebytes(image).decode()
 
 
-async def dimension(img, best_size=512):
+async def dimension(img, best_size=1024):
     if isinstance(img, np.ndarray):
         h, w = img.shape[:2]
     if isinstance(img, str) or isinstance(img, Path):
@@ -172,14 +172,14 @@ class Job:
         self.prompt = prompt
         self.params = {
             "sampler_name": "k_dpmpp_2m",
-            "steps": 20,
+            "steps": 8,
             "karras": False,
             "seed_variation": 1,
         }
         self.payload = {
             "prompt": self.prompt,
             "params": self.params,
-            "models": ["Deliberate 3.0"],
+            "models": ["Z-Image-Turbo"],
             "shared": True,
             "nsfw": True,
             "replacement_filter": True,
@@ -192,7 +192,7 @@ class Job:
         self.result = None
         self.conn = conn
         self.headers = {"apikey": self.conn.apikey, "Client-Agent": self.conn.agent}
-        self.best_size = 512
+        self.best_size = 1024
 
     async def set_image(self, image):
         self.source_image = pack_image(image)
