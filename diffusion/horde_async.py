@@ -256,10 +256,8 @@ class Job:
                     self.payload["extra_source_images"][i]["image"] = pack_image(
                         self.payload["extra_source_images"][i]["image"]
                     )
-        if is_xl(model) or is_cascade(model):
-            self.params["width"] = self.params.get("width", 1024)
-            self.params["height"] = self.params.get("height", 1024)
-            self.best_size = 1024
+        self.params["width"] = self.params.get("width", self.best_size)
+        self.params["height"] = self.params.get("height", self.best_size)
         if is_cascade(model):
             self.params["sampler_name"] = "k_euler_a"
         # if len([x for x in self.payload.get("models", []) if "sdxl" in x.lower()]) > 0:
