@@ -175,7 +175,7 @@ class Job:
             "steps": 8,
             "karras": False,
             "seed_variation": 1,
-            "cfg_scale": 1
+            "cfg_scale": 1,
         }
         self.payload = {
             "prompt": self.prompt,
