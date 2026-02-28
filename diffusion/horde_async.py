@@ -182,7 +182,7 @@ class Job:
             "params": self.params,
             "models": ["Z-Image-Turbo"],
             "shared": True,
-            "nsfw": True,
+            "nsfw": False,
             "replacement_filter": True,
             "trusted_workers": False,
         }
